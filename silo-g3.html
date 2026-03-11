@@ -1,0 +1,2405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SiloCosto — Las Palmas G3</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;700;900&family=Epilogue:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f1eb;
+  --surface: #ffffff;
+  --soil: #1a1208;
+  --earth: #2a1c0c;
+  --clay: #3d2710;
+  --amber: #b5701a;
+  --gold: #d08c28;
+  --straw: #e6c46e;
+  --cream: #faf6ed;
+  --green: #2a5425;
+  --green-l: #387030;
+  --blue: #1a3a5c;
+  --purple: #4a2060;
+  --red: #7a1f1f;
+  --border: #d4c0a0;
+  --text: #1a1208;
+  --muted: #7a5c3a;
+  --shadow: 0 2px 12px rgba(26,18,8,0.09);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Epilogue',sans-serif; min-height:100vh; font-size:14px; }
+
+/* LAYOUT */
+.shell { display:flex; flex-direction:column; min-height:100vh; }
+header {
+  background:var(--soil); height:58px; display:flex; align-items:center;
+  justify-content:space-between; padding:0 28px;
+  border-bottom:2px solid var(--amber); position:sticky; top:0; z-index:100;
+}
+.logo { font-family:'Fraunces',serif; font-size:20px; font-weight:900; color:var(--straw); }
+.logo em { color:var(--gold); font-style:normal; }
+.logo-tag { font-family:'DM Mono',monospace; font-size:10px; color:#806040; margin-left:10px; }
+.header-nav { display:flex; gap:2px; }
+.hnav { padding:8px 14px; background:transparent; border:none; color:#906848; font-family:'Epilogue',sans-serif; font-size:12px; font-weight:600; cursor:pointer; text-transform:uppercase; letter-spacing:1px; transition:all 0.15s; border-bottom:2px solid transparent; }
+.hnav:hover { color:var(--straw); }
+.hnav.active { color:var(--straw); border-bottom-color:var(--gold); }
+.body { display:flex; flex:1; }
+
+/* SIDEBAR */
+.sidebar { width:210px; background:var(--earth); padding:16px 0; flex-shrink:0; border-right:1px solid var(--clay); }
+.sb-label { font-family:'DM Mono',monospace; font-size:9px; color:var(--amber); letter-spacing:3px; text-transform:uppercase; padding:8px 16px 4px; display:block; }
+.sb-item { display:flex; align-items:center; gap:8px; padding:8px 16px; cursor:pointer; color:#b09070; font-size:13px; font-weight:500; transition:all 0.12s; border-left:3px solid transparent; }
+.sb-item:hover { color:var(--straw); background:rgba(255,255,255,0.05); }
+.sb-item.active { color:var(--straw); border-left-color:var(--gold); background:rgba(212,140,40,0.1); }
+.sb-icon { font-size:14px; width:18px; text-align:center; }
+.sb-ha { font-family:'DM Mono',monospace; font-size:9px; color:var(--amber); margin-left:auto; }
+.sb-div { height:1px; background:var(--clay); margin:8px 16px; }
+
+/* CONTENT */
+.content { flex:1; padding:26px 34px; overflow-y:auto; max-height:calc(100vh - 58px); }
+.page { display:none; }
+.page.active { display:block; animation:up 0.2s ease; }
+@keyframes up { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.pg-title { font-family:'Fraunces',serif; font-size:26px; font-weight:700; color:var(--soil); }
+.pg-sub { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); margin-top:4px; margin-bottom:24px; }
+
+/* CARDS */
+.card { background:var(--surface); border:1px solid var(--border); padding:20px; margin-bottom:16px; box-shadow:var(--shadow); }
+.card-head { font-family:'Fraunces',serif; font-size:15px; font-weight:700; color:var(--soil); margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:8px; }
+
+/* STATS */
+.stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
+.stat { background:var(--surface); border:1px solid var(--border); padding:16px; box-shadow:var(--shadow); position:relative; overflow:hidden; }
+.stat::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; }
+.stat.c1::after { background:var(--gold); }
+.stat.c2::after { background:var(--green); }
+.stat.c3::after { background:var(--blue); }
+.stat-lbl { font-family:'DM Mono',monospace; font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:2px; margin-bottom:5px; }
+.stat-val { font-family:'Fraunces',serif; font-size:26px; font-weight:700; color:var(--soil); line-height:1; }
+.stat-unit { font-size:11px; color:var(--muted); font-family:'DM Mono',monospace; margin-top:4px; }
+
+/* FORMS */
+.fg2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.fg3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+.fg4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px; }
+.field { display:flex; flex-direction:column; gap:5px; }
+.field.full { grid-column:1/-1; }
+label { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+input,select,textarea { padding:9px 12px; border:1px solid var(--border); background:var(--cream); color:var(--text); font-family:'Epilogue',sans-serif; font-size:13px; outline:none; transition:border-color 0.15s; }
+input:focus,select:focus { border-color:var(--gold); background:white; }
+input:disabled { opacity:0.6; cursor:not-allowed; }
+
+/* BUTTONS */
+.btn { padding:9px 18px; border:none; cursor:pointer; font-family:'Epilogue',sans-serif; font-weight:600; font-size:12px; transition:all 0.15s; }
+.btn-p { background:var(--gold); color:white; }
+.btn-p:hover { background:var(--amber); }
+.btn-s { background:transparent; color:var(--muted); border:1px solid var(--border); }
+.btn-s:hover { border-color:var(--gold); color:var(--gold); }
+.btn-d { background:transparent; color:var(--red); border:1px solid var(--red); padding:5px 11px; font-size:11px; }
+.btn-d:hover { background:var(--red); color:white; }
+.btn-g { background:var(--green); color:white; }
+.btn-g:hover { background:var(--green-l); }
+.btn-row { display:flex; gap:10px; margin-top:16px; align-items:center; flex-wrap:wrap; }
+
+/* TABLES */
+.tbl-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th { background:var(--soil); color:var(--straw); padding:8px 12px; text-align:left; font-family:'DM Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:1px; }
+td { padding:9px 12px; border-bottom:1px solid #ece0cc; vertical-align:middle; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:var(--cream); }
+.mono { font-family:'DM Mono',monospace; }
+.tr { text-align:right; }
+.amber { color:var(--amber); font-weight:700; }
+.green { color:var(--green); font-weight:700; }
+
+/* TABS */
+.ptabs { display:flex; gap:0; margin-bottom:18px; border-bottom:2px solid var(--border); }
+.ptab { padding:9px 22px; background:transparent; border:none; cursor:pointer; font-family:'Epilogue',sans-serif; font-weight:600; font-size:13px; color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-2px; transition:all 0.15s; }
+.ptab:hover { color:var(--amber); }
+.ptab.active { color:var(--amber); border-bottom-color:var(--gold); }
+
+.ctabs { display:flex; gap:4px; margin-bottom:14px; flex-wrap:wrap; }
+.ctab { padding:6px 16px; background:var(--cream); border:1px solid var(--border); cursor:pointer; font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); transition:all 0.15s; }
+.ctab:hover { border-color:var(--gold); }
+.ctab.active { background:var(--soil); color:var(--straw); border-color:var(--soil); }
+
+/* TABLA SELECTOR */
+.tabla-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; margin:12px 0; }
+.tabla-card { border:2px solid var(--border); padding:10px 14px; cursor:pointer; transition:all 0.15s; text-align:center; background:var(--cream); }
+.tabla-card:hover { border-color:var(--gold); }
+.tabla-card.selected { border-color:var(--gold); background:rgba(208,140,40,0.1); }
+.tabla-card.active-reg { border-color:var(--green); background:rgba(42,84,37,0.08); }
+.tabla-name { font-weight:700; font-size:13px; color:var(--soil); }
+.tabla-ha { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); margin-top:2px; }
+.tabla-cultivo { font-size:10px; margin-top:4px; padding:2px 6px; display:inline-block; }
+.cultivo-maiz { background:#e8f5e8; color:var(--green); }
+.cultivo-trigo { background:#fef3e2; color:var(--amber); }
+.cultivo-sorgo { background:#f0e8f8; color:var(--purple); }
+.cultivo-otro { background:#f0f0f0; color:#555; }
+
+/* RESULT BOX */
+.result { background:var(--soil); color:var(--cream); padding:18px 22px; display:flex; align-items:center; justify-content:space-between; margin-top:14px; flex-wrap:wrap; gap:14px; }
+.res-lbl { font-family:'DM Mono',monospace; font-size:9px; color:var(--amber); text-transform:uppercase; letter-spacing:2px; margin-bottom:4px; }
+.res-val { font-family:'Fraunces',serif; font-size:28px; font-weight:700; color:var(--straw); }
+.res-sub { font-size:11px; color:var(--gold); margin-top:3px; font-family:'DM Mono',monospace; }
+
+/* DEPRECIATION TYPE BADGE */
+.dep-badge { display:inline-block; padding:3px 8px; font-family:'DM Mono',monospace; font-size:9px; font-weight:600; }
+.dep-general { background:#e8f5e8; color:var(--green); }
+.dep-tabla { background:#fef3e2; color:var(--amber); }
+
+/* EMPTY */
+.empty { text-align:center; padding:36px; color:var(--muted); }
+.empty-icon { font-size:34px; margin-bottom:10px; }
+
+/* TOAST */
+.toast { position:fixed; bottom:24px; right:24px; background:var(--green); color:white; padding:11px 18px; font-size:13px; font-weight:600; z-index:999; box-shadow:0 4px 20px rgba(0,0,0,0.2); animation:slideIn 0.3s ease; }
+@keyframes slideIn { from{transform:translateX(80px);opacity:0} to{transform:translateX(0);opacity:1} }
+
+/* LOGIN */
+.login-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:var(--soil); z-index:9999; display:flex; align-items:center; justify-content:center; }
+.login-box { background:var(--cream); padding:48px; width:360px; text-align:center; }
+.login-title { font-family:'Fraunces',serif; font-size:32px; font-weight:900; color:var(--soil); margin-bottom:6px; }
+.login-sub { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); margin-bottom:32px; }
+.login-field { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; text-align:left; }
+.login-error { background:#fde8e8; color:#7a1f1f; padding:10px; font-size:13px; font-weight:600; margin-bottom:16px; display:none; }
+
+/* PDF */
+.pdf-btn { background:var(--red); color:white; padding:8px 18px; border:none; cursor:pointer; font-family:'Epilogue',sans-serif; font-weight:700; font-size:12px; transition:opacity 0.15s; }
+.pdf-btn:hover { opacity:0.85; }
+
+/* CHECKBOX MULTI SELECT */
+.check-row { display:flex; align-items:center; gap:8px; padding:6px 0; cursor:pointer; font-size:13px; }
+.check-row input[type=checkbox] { width:16px; height:16px; cursor:pointer; accent-color:var(--gold); }
+</style>
+</head>
+<body>
+<div class="shell">
+<header>
+  <div>
+    <span class="logo">Silo<em>Costo</em> LP</span>
+    <span class="logo-tag">G3</span>
+  <span id="save-indicator" style="font-family:'DM Mono',monospace;font-size:10px;color:#806040;margin-left:14px">☁️ Nube</span>
+  <span id="user-tag" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--straw);margin-left:14px"></span>
+  </div>
+  <nav class="header-nav">
+    <button class="hnav active" onclick="goSec('dashboard')">Dashboard</button>
+    <button class="hnav" onclick="goSec('tablas')">Tablas</button>
+    <button class="hnav" onclick="goSec('articulos')">Artículos</button>
+    <button class="hnav" onclick="goSec('depreciaciones')">Depreciaciones</button>
+    <button class="hnav" onclick="goSec('gastos')">Gastos</button>
+    <button class="hnav" onclick="goSec('registro')">Registro</button>
+    <button class="hnav" onclick="goSec('monitor')">Monitor</button>
+    <button class="hnav" onclick="goSec('reportes')">Reportes</button>
+  </nav>
+</header>
+
+<div class="body">
+<aside class="sidebar">
+  <span class="sb-label">Predios</span>
+  <div class="sb-item active" onclick="goSec('tablas');curPredioTab=0;renderTablas()">
+    <span class="sb-icon">🔴</span><span>Cortijo</span><span class="sb-ha">61ha</span>
+  </div>
+  <div class="sb-item" onclick="goSec('tablas');curPredioTab=1;renderTablas()">
+    <span class="sb-icon">🟡</span><span>Palmas</span><span class="sb-ha">146ha</span>
+  </div>
+  <div class="sb-item" onclick="goSec('tablas');curPredioTab=2;renderTablas()">
+    <span class="sb-icon">🟢</span><span>San Ramón</span><span class="sb-ha">63ha</span>
+  </div>
+  <div class="sb-div"></div>
+  <span class="sb-label">Accesos</span>
+  <div class="sb-item" onclick="goSec('articulos')"><span class="sb-icon">📦</span>Artículos</div>
+  <div class="sb-item" onclick="goSec('depreciaciones')"><span class="sb-icon">⚙️</span>Depreciaciones</div>
+  <div class="sb-item" onclick="goSec('gastos')"><span class="sb-icon">💰</span>Gastos Gral.</div>
+  <div class="sb-item" onclick="goSec('registro')"><span class="sb-icon">✏️</span>Registro</div>
+  <div class="sb-item" onclick="goSec('monitor')"><span class="sb-icon">📡</span>Monitor</div>
+  <div class="sb-item" onclick="goSec('reportes')"><span class="sb-icon">📄</span>PDF</div>
+</aside>
+
+<main class="content">
+
+  <!-- DASHBOARD -->
+  <section id="sec-dashboard" class="page active">
+    <div class="pg-title">Dashboard General</div>
+    <div class="pg-sub">// Resumen en tiempo real · Los 3 predios · 269.45 ha</div>
+    <div class="stats-row" id="dash-stats" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))"></div>
+    <div class="card">
+      <div class="card-head">🗺️ Resumen por predio y tabla</div>
+      <div id="dash-detail"></div>
+    </div>
+  </section>
+
+  <!-- TABLAS -->
+  <section id="sec-tablas" class="page">
+    <div class="pg-title">Configuración de Tablas</div>
+    <div class="pg-sub">// Hectáreas y cultivo por tabla · Define cada subdivisión del predio</div>
+    <div class="ptabs" id="tab-ptabs"></div>
+    <div id="tab-content"></div>
+  </section>
+
+  <!-- ARTÍCULOS -->
+  <section id="sec-articulos" class="page">
+    <div class="pg-title">Catálogo de Artículos</div>
+    <div class="pg-sub">// Precios con historial — se fotografía al registrar consumo</div>
+    <div class="card">
+      <div class="card-head">➕ Nuevo artículo / Actualizar precio</div>
+      <div class="fg4">
+        <div class="field">
+          <label>Nombre</label>
+          <input type="text" id="art-nombre" placeholder="Ej: Semilla, Diesel..."/>
+        </div>
+        <div class="field">
+          <label>Categoría</label>
+          <select id="art-cat">
+            <option>Material de cultivo</option>
+            <option>Maquinaria</option>
+            <option>Reparaciones Riego</option>
+            <option>Luz</option>
+            <option>Ensilada</option>
+            <option>Materiales de ensilada</option>
+            <option>Nómina y gastos admin</option>
+            <option>Diesel</option>
+            <option>Sirre y Desmonte</option>
+            <option>Otro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Precio actual</label>
+          <input type="number" id="art-precio" placeholder="0.00"/>
+        </div>
+        <div class="field">
+          <label>Unidad</label>
+          <input type="text" id="art-unidad" placeholder="kg, L, hr..."/>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-p" onclick="addArticulo()">Guardar artículo</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">📦 Artículos registrados</div>
+      <div id="art-list"></div>
+    </div>
+  </section>
+
+  <!-- DEPRECIACIONES -->
+  <section id="sec-depreciaciones" class="page">
+    <div class="pg-title">Depreciaciones</div>
+    <div class="pg-sub">// General (aplica a todo el predio) · Por tabla(s) específicas</div>
+    <div class="ptabs" id="dep-ptabs"></div>
+    <div id="dep-content"></div>
+  </section>
+
+  <!-- GASTOS GENERALES -->
+  <section id="sec-gastos" class="page">
+    <div class="pg-title">Gastos Generales</div>
+    <div class="pg-sub">// Diesel, Luz, Nómina y más — se asignan por mes y se prorratean por ha entre predios y tablas</div>
+    <div id="gastos-content"></div>
+  </section>
+
+  <!-- REGISTRO -->
+  <section id="sec-registro" class="page">
+    <div class="pg-title">Registro de Consumos</div>
+    <div class="pg-sub">// Por tabla · Selecciona predio → cosecha → tabla → ingresa consumos</div>
+    <div class="ptabs" id="reg-ptabs"></div>
+    <div class="ctabs" id="reg-ctabs"></div>
+    <div id="reg-content"></div>
+  </section>
+
+  <!-- MONITOR -->
+  <section id="sec-monitor" class="page">
+    <div class="pg-title">Monitor en Tiempo Real</div>
+    <div class="pg-sub">// Acumulado por predio y tabla · Se actualiza con cada registro</div>
+    <div class="ptabs" id="mon-ptabs"></div>
+    <div id="mon-content"></div>
+  </section>
+
+  <!-- REPORTES -->
+  <section id="sec-reportes" class="page">
+    <div class="pg-title">Reportes y Exportación PDF</div>
+    <div class="pg-sub">// Reporte por tabla o resumen de predio completo</div>
+    <div class="ptabs" id="rep-ptabs"></div>
+    <div class="ctabs" id="rep-ctabs"></div>
+    <div id="rep-content"></div>
+  </section>
+
+</main>
+</div>
+</div>
+
+<!-- LOGIN OVERLAY -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <div class="login-title">Silo<span style="color:var(--gold)">Costo</span> LP</div>
+    <div class="login-sub">G3 · Las Palmas</div>
+    <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
+    <div class="login-field">
+      <label>Usuario</label>
+      <input type="text" id="login-user" placeholder="usuario@LasPalmas" autocomplete="username"/>
+    </div>
+    <div class="login-field">
+      <label>Contraseña</label>
+      <input type="password" id="login-pass" placeholder="••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;color:var(--muted);cursor:pointer">
+      <input type="checkbox" id="login-remember" style="width:16px;height:16px"/> Recordarme
+    </label>
+    <button class="btn btn-p" style="width:100%;margin-top:4px;padding:12px" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+// ── AUTH ──
+const USERS = {
+  'Ale@LasPalmas': { pass:'1234', rol:'admin' },
+  'Rodi@LasPalmas': { pass:'1234', rol:'colaborador' }
+};
+let currentUser = null;
+
+function doLogin() {
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const remember = document.getElementById('login-remember')?.checked;
+  const u = USERS[user];
+  if(u && u.pass === pass) {
+    currentUser = { nombre: user, rol: u.rol };
+    if(remember) {
+      try { localStorage.setItem('silocosto_remember_g3', user); } catch(e){}
+    } else {
+      try { localStorage.removeItem('silocosto_remember_g3'); } catch(e){}
+    }
+    document.getElementById('login-overlay').style.display = 'none';
+    applyRoleUI();
+    toast(`✓ Bienvenido ${user.split('@')[0]}`);
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+
+function checkRemembered() {
+  try {
+    const saved = localStorage.getItem('silocosto_remember_g3');
+    if(saved && USERS[saved]) {
+      document.getElementById('login-user').value = saved;
+      document.getElementById('login-remember').checked = true;
+    }
+  } catch(e){}
+}
+
+function applyRoleUI() {
+  const isAdmin = currentUser?.rol === 'admin';
+  // Hide nav items for colaborador
+  const restrictedSections = ['tablas','articulos','depreciaciones','monitor','reportes']; // Naty puede ver gastos y registro
+  document.querySelectorAll('.hnav').forEach(btn => {
+    const txt = btn.textContent.toLowerCase().trim();
+    const restricted = restrictedSections.some(n => txt.startsWith(n.slice(0,4)));
+    btn.style.display = (!isAdmin && restricted) ? 'none' : '';
+  });
+  document.querySelectorAll('.sb-item').forEach(item => {
+    const txt = item.textContent.toLowerCase().trim();
+    const restricted = restrictedSections.some(n => txt.includes(n.slice(0,4)));
+    item.style.display = (!isAdmin && restricted) ? 'none' : '';
+  });
+  // Show user indicator in header
+  const tag = document.getElementById('user-tag');
+  if(tag) tag.textContent = (isAdmin ? '👑' : '👤') + ' ' + currentUser.nombre.split('@')[0];
+  // Colaborador goes straight to registro (grid)
+  if(!isAdmin) goSec('registro');
+}
+
+const SK = 'silocosto_g3_v1';
+let _saveTimeout = null;
+const SB_URL = 'https://qlgctjnrndzhvqondjvz.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsZ2N0am5ybmR6aHZxb25kanZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxNjQzNjgsImV4cCI6MjA4Nzc0MDM2OH0._4KqKFG0N_zrS2ovwxpvi5SzQpQcPMK71wGZ3N3Cilo';
+
+async function sbGet(key) {
+  const r = await fetch(`${SB_URL}/rest/v1/kv_store?key=eq.${key}&select=value`, {
+    headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
+  });
+  const data = await r.json();
+  return data.length ? data[0].value : null;
+}
+
+async function sbSet(key, value) {
+  await fetch(`${SB_URL}/rest/v1/kv_store`, {
+    method: 'POST',
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': `Bearer ${SB_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates'
+    },
+    body: JSON.stringify({ key, value, updated_at: new Date().toISOString() })
+  });
+}
+
+const PREDIOS_DEFAULT = [
+  {
+    nombre: 'Cortijo', emoji: '🔴', ciclos: 3,
+    tablas: [
+      {nombre:'Tabla 1', ha:13.63}, {nombre:'Tabla 2', ha:11.65},
+      {nombre:'Pivote',  ha:36}
+    ]
+  },
+  {
+    nombre: 'Palmas', emoji: '🟡', ciclos: 3,
+    tablas: [
+      {nombre:'Tabla 1',  ha:4},    {nombre:'Tabla 2',  ha:9.81},
+      {nombre:'Tabla 3',  ha:13.03},{nombre:'Tabla 4',  ha:9.87},
+      {nombre:'Tabla 5',  ha:2.49}, {nombre:'Tabla 6',  ha:4.19},
+      {nombre:'Tabla 15', ha:6.59}, {nombre:'Tabla 16', ha:5.02},
+      {nombre:'Tabla 17', ha:5.33}, {nombre:'Tabla 18', ha:5.49},
+      {nombre:'Tabla 19', ha:4.98}, {nombre:'Tabla 20', ha:0.5},
+      {nombre:'Tabla 21', ha:1.5},  {nombre:'Pivote',   ha:73}
+    ]
+  },
+  {
+    nombre: 'San Ramón', emoji: '🟢', ciclos: 3,
+    tablas: [
+      {nombre:'Tabla 1',  ha:4.09}, {nombre:'Tabla 2',  ha:4.16},
+      {nombre:'Tabla 3',  ha:4.2},  {nombre:'Tabla 4',  ha:4.07},
+      {nombre:'Tabla 5',  ha:4.24}, {nombre:'Tabla 6',  ha:4.06},
+      {nombre:'Tabla 7',  ha:4},    {nombre:'Tabla 8',  ha:4},
+      {nombre:'Tabla 9',  ha:9.17}, {nombre:'Tabla 10', ha:8.78},
+      {nombre:'Tabla 11', ha:7.78}, {nombre:'Tabla 12', ha:3.82}
+    ]
+  }
+];
+
+function defaultState() {
+  return {
+    predios: JSON.parse(JSON.stringify(PREDIOS_DEFAULT)),
+    articulos: [],
+    // depreciaciones[pi] = [{id, nombre, tipo_activo, valorActivo, vidaUtil, costoAnual, alcance:'general'|'tablas', tablasIdx:[]}]
+    depreciaciones: [[], [], []],
+    // cosechas[pi][cosechaNum][tablaIdx] = {cultivo, kilos, pctMS, consumos:[]}
+    cosechas: [
+      { 1:{}, 2:{}, 3:{} },
+      { 1:{}, 2:{}, 3:{} },
+      { 1:{}, 2:{}, 3:{} }
+    ],
+    // gastosGenerales = [{id, mes, anio, categoria, monto, prediosIdx:[0,1,2], fecha}]
+    gastosGenerales: [],
+    // equipos = {pi: [{id, nombre, tipo:'tractor'|'noria'|'luz'}]}
+    equipos: {}
+  };
+}
+
+function emptyTablaData() {
+  return { cultivo:'maiz', kilos:'', pctMS:'', haSembradas:'', consumos:[] };
+}
+
+let S = defaultState();
+let _loaded = false;
+
+async function loadState() {
+  try {
+    const r = await sbGet(SK);
+    if(r) S = JSON.parse(r);
+  } catch(e){ S = defaultState(); }
+  _loaded = true;
+  render(curSec);
+  renderDash();
+}
+
+async function save() {
+  try {
+    await sbSet(SK, JSON.stringify(S));
+    const ind = document.getElementById('save-indicator');
+    if(ind) { ind.textContent = '☁️ Guardado'; ind.style.color = '#2a7a2a'; setTimeout(()=>{ ind.textContent = '☁️ Nube'; ind.style.color = '#806040'; }, 2000); }
+  } catch(e){
+    const ind = document.getElementById('save-indicator');
+    if(ind) { ind.textContent = '❌ ' + e.message; ind.style.color = '#7a1f1f'; }
+    alert('Error al guardar: ' + e.message);
+  }
+}
+function uid() { return Math.random().toString(36).slice(2,9); }
+function today() { return new Date().toLocaleDateString('es-CL'); }
+
+function fmt(n) {
+  if(n===null||n===undefined||isNaN(n)||n==='') return '—';
+  return '$'+Number(n).toLocaleString('es-CL',{minimumFractionDigits:0,maximumFractionDigits:2});
+}
+function fmtN(n,d=2) {
+  if(!n&&n!==0) return '—';
+  return Number(n).toLocaleString('es-CL',{minimumFractionDigits:d,maximumFractionDigits:d});
+}
+
+const CULTIVOS = {
+  maiz:  { label:'Maíz',  icon:'🌽', css:'cultivo-maiz',  pct:40 },
+  trigo: { label:'Triticale', icon:'🌾', css:'cultivo-trigo', pct:20 },
+  sorgo: { label:'Sorgo', icon:'🌿', css:'cultivo-sorgo', pct:40 },
+  higo:  { label:'Higo',  icon:'🍃', css:'cultivo-otro',  pct:40 },
+  otro:  { label:'Otro',  icon:'🌱', css:'cultivo-otro',  pct:40 }
+};
+
+function cultivoBadge(c) {
+  const cv = CULTIVOS[c] || CULTIVOS.otro;
+  return `<span class="tabla-cultivo ${cv.css}">${cv.icon} ${cv.label}</span>`;
+}
+
+function getTablaData(pi, cn, ti) {
+  if(!S.cosechas[pi][cn]) S.cosechas[pi][cn] = {};
+  if(!S.cosechas[pi][cn][ti]) S.cosechas[pi][cn][ti] = emptyTablaData();
+  return S.cosechas[pi][cn][ti];
+}
+
+function getCosechaMeta(pi, cn) {
+  if(!S.cosechas[pi][cn]) S.cosechas[pi][cn] = {};
+  if(!S.cosechas[pi][cn]._meta) S.cosechas[pi][cn]._meta = {
+    year: new Date().getFullYear(), closed: false, closedDate: null
+  };
+  return S.cosechas[pi][cn]._meta;
+}
+
+function toggleCosechaClosed(pi, cn) {
+  // Only admin can close/reopen
+  if(!currentUser || currentUser.rol !== 'admin') {
+    toast('⚠️ Solo el administrador puede cerrar o reabrir cosechas', true);
+    return;
+  }
+  const meta = getCosechaMeta(pi, cn);
+  const accion = meta.closed ? 'reabrir' : 'cerrar';
+  const pass = prompt(`Ingresa tu contraseña para ${accion} esta cosecha:`);
+  if(pass === null) return; // cancelled
+  const u = USERS[currentUser.nombre];
+  if(!u || pass !== u.pass) {
+    toast('⚠️ Contraseña incorrecta', true);
+    return;
+  }
+  meta.closed = !meta.closed;
+  meta.closedDate = meta.closed ? today() : null;
+  save();
+  renderReg();
+  toast(meta.closed ? '🔒 Cosecha cerrada y archivada' : '🔓 Cosecha reabierta');
+}
+
+function getCurrentPrice(artId) {
+  const a = S.articulos.find(x => x.id===artId);
+  if(!a||!a.precios.length) return null;
+  return a.precios[a.precios.length-1].valor;
+}
+
+// ── DEPRECIATION CALC ──
+// For a given predio + cosecha + tabla, sum up applicable depreciations
+function calcDepTabla(pi, cn, ti) {
+  const predio = S.predios[pi];
+  const td = getTablaData(pi,cn,ti);
+  // Use haSembradas if set, otherwise fall back to tabla's total ha
+  const tablaHa = parseFloat(td.haSembradas) || predio.tablas[ti]?.ha || 0;
+  // Total ha for this cosecha = sum of haSembradas (or default ha) across all tablas
+  const totalHa = predio.tablas.reduce((s,t,idx)=>{
+    const tdx = getTablaData(pi,cn,idx);
+    return s + (parseFloat(tdx.haSembradas) || t.ha || 0);
+  },0);
+  const ciclos = predio.ciclos || 3;
+  // Weight for this cosecha based on cultivo 40/20
+  const cultivo = td.cultivo || 'maiz';
+
+  let total = 0;
+  for(const dep of S.depreciaciones[pi]) {
+    const costoAnual = parseFloat(dep.costoAnual)||0;
+    // Determine this tabla's share of the annual cost
+    let tablaPct = tablaHa / totalHa; // pro-rata by ha
+
+    // Cosecha de inicio — si esta cosecha es anterior a la de inicio, no aplica
+    const cosechaInicio = dep.cosechaInicio || 1;
+    // Check if this cosecha/year combo is before the start
+    // Simple check: if anioInicio is set and current cosecha year < anioInicio, skip
+    // We use meta year for each cosecha
+    const metaCn = getCosechaMeta(pi, cn);
+    const metaYear = metaCn.year || new Date().getFullYear();
+    if(dep.anioInicio && metaYear < dep.anioInicio) continue;
+    if(dep.anioInicio && metaYear === dep.anioInicio && cn < cosechaInicio) continue;
+    if(dep.anioFin && metaYear > dep.anioFin) continue;
+
+    // Cultivos filter — check if this tabla's cultivo matches what dep applies to
+    const aplicaCultivos = dep.aplicaCultivos || 'todos';
+    const esPrincipal = cultivo === 'maiz' || cultivo === 'sorgo';
+    const esTriticale = cultivo === 'trigo';
+    if(aplicaCultivos === 'principales' && !esPrincipal) continue;
+    if(aplicaCultivos === 'triticale' && !esTriticale) continue;
+
+    // Cosecha weight
+    let cosechaWeight = 1;
+    if(ciclos === 1) {
+      cosechaWeight = cn === 1 ? 1 : 0;
+    } else {
+      // Solo sumar cosechas que aplican según aplicaCultivos
+      let pesoTotal = 0;
+      for(let c=1;c<=3;c++) {
+        // Skip cosechas before cosechaInicio in anioInicio year
+        const metaC = getCosechaMeta(pi,c);
+        const yearC = metaC.year || new Date().getFullYear();
+        if(dep.anioInicio && yearC < dep.anioInicio) continue;
+        if(dep.anioInicio && yearC === dep.anioInicio && c < cosechaInicio) continue;
+        if(dep.anioFin && yearC > dep.anioFin) continue;
+
+        let pesoCosecha = 0;
+        let tablasCounted = 0;
+        for(let t=0;t<predio.tablas.length;t++) {
+          const cv = getTablaData(pi,c,t).cultivo||'maiz';
+          const esPrincipalC = cv==='maiz'||cv==='sorgo';
+          const esTriticaleC = cv==='trigo';
+          if(aplicaCultivos==='principales' && !esPrincipalC) continue;
+          if(aplicaCultivos==='triticale' && !esTriticaleC) continue;
+          pesoCosecha += CULTIVOS[cv]?.pct||40;
+          tablasCounted++;
+        }
+        if(tablasCounted>0) pesoTotal += pesoCosecha / tablasCounted;
+      }
+      // Peso de esta tabla en esta cosecha
+      const miPeso = CULTIVOS[cultivo]?.pct||40;
+      cosechaWeight = pesoTotal > 0 ? miPeso / pesoTotal : 0;
+    }
+
+    // Alcance
+    if(dep.alcance === 'general') {
+      total += costoAnual * tablaPct * cosechaWeight;
+    } else {
+      // Only if this tabla is selected
+      if((dep.tablasIdx||[]).includes(ti)) {
+        // Split equally among selected tablas by ha
+        const selTablas = (dep.tablasIdx||[]);
+        const selHaTotal = selTablas.reduce((s,idx)=>{
+          return s + (predio.tablas[idx]?.ha||0);
+        },0);
+        const myHaPct = selHaTotal > 0 ? tablaHa/selHaTotal : 0;
+        total += costoAnual * myHaPct * cosechaWeight;
+      }
+    }
+  }
+  return total;
+}
+
+function calcConsumosTabla(pi, cn, ti) {
+  const td = getTablaData(pi,cn,ti);
+  return (td.consumos||[]).reduce((s,c)=>s+(parseFloat(c.cantidad)||0)*(parseFloat(c.precioSnapshot)||0),0);
+}
+
+function calcTotalTabla(pi, cn, ti) {
+  return calcDepTabla(pi,cn,ti) + calcConsumosTabla(pi,cn,ti) + calcGastosGeneralesTabla(pi,cn,ti);
+}
+
+function calcCPK(pi, cn, ti) {
+  const td = getTablaData(pi,cn,ti);
+  const kilos = parseFloat(td.kilos)||0;
+  if(!kilos) return null;
+  return calcTotalTabla(pi,cn,ti)/kilos;
+}
+
+function calcCPKMS(pi, cn, ti) {
+  const td = getTablaData(pi,cn,ti);
+  const kilos = parseFloat(td.kilos)||0;
+  const pct = parseFloat(td.pctMS)||0;
+  if(!kilos||!pct) return null;
+  const kgMS = kilos*(pct/100);
+  return calcTotalTabla(pi,cn,ti)/kgMS;
+}
+
+function calcDepAnualTotal(pi) {
+  return S.depreciaciones[pi].reduce((s,d)=>s+(parseFloat(d.costoAnual)||0),0);
+}
+
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+let curSec = 'dashboard';
+let curPredioTab=0, curPredioDep=0, curPredioReg=0, curPredioMon=0, curPredioRep=0;
+let curCosechaReg=1, curCosechaRep=1;
+let curTablaReg=0, curTablaRep=0;
+
+function goSec(sec) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.hnav').forEach(n=>n.classList.remove('active'));
+  document.getElementById('sec-'+sec).classList.add('active');
+  [...document.querySelectorAll('.hnav')].find(n=>n.textContent.toLowerCase().includes(sec.slice(0,4)))?.classList.add('active');
+  curSec = sec;
+  render(sec);
+}
+
+function render(sec) {
+  if(sec==='dashboard') renderDash();
+  if(sec==='tablas') renderTablas();
+  if(sec==='articulos') renderArticulos();
+  if(sec==='depreciaciones') renderDep();
+  if(sec==='gastos') renderGastos();
+  if(sec==='registro') renderReg();
+  if(sec==='monitor') renderMon();
+  if(sec==='reportes') renderRep();
+}
+
+// ══════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════
+function renderDash() {
+  const stats = document.getElementById('dash-stats');
+  // Un cuadrito por predio x cosecha
+  let cards = '';
+  S.predios.forEach((p,pi)=>{
+    const ciclos = p.ciclos||3;
+    const cosechas = ciclos===1?[1]:[1,2,3];
+    cosechas.forEach(cn=>{
+      const meta = getCosechaMeta(pi,cn);
+      let totalCost=0, totalKilos=0, totalKgMS=0;
+      // Cultivos presentes en esta cosecha
+      const cultivosSet = new Set();
+      for(let ti=0;ti<p.tablas.length;ti++) {
+        const td = getTablaData(pi,cn,ti);
+        const kilos = parseFloat(td.kilos)||0;
+        if(kilos>0) {
+          totalCost += calcTotalTabla(pi,cn,ti);
+          totalKilos += kilos;
+          totalKgMS += kilos*((parseFloat(td.pctMS)||0)/100);
+          cultivosSet.add(td.cultivo||'maiz');
+        }
+      }
+      const cpk = totalKilos ? totalCost/totalKilos : null;
+      const cpkms = totalKgMS ? totalCost/totalKgMS : null;
+      const cvIcons = [...cultivosSet].map(c=>CULTIVOS[c]?.icon||'🌱').join(' ');
+      const colors = ['c1','c2','c3'];
+      cards += `<div class="stat ${colors[pi%3]}" style="min-width:0">
+        <div class="stat-lbl">${p.emoji} ${p.nombre} · Cosecha ${cn} ${meta.closed?'🔒':''} · ${meta.year}</div>
+        <div style="display:flex;align-items:baseline;gap:12px;margin-top:6px;flex-wrap:wrap">
+          <div>
+            <div style="font-family:'DM Mono',monospace;font-size:9px;color:#2a7a2a;text-transform:uppercase;letter-spacing:1px">kg húmedo ${cvIcons}</div>
+            <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:700;color:#2a7a2a;line-height:1">${cpk!==null?'$'+cpk.toFixed(2):'—'}</div>
+          </div>
+          <div>
+            <div style="font-family:'DM Mono',monospace;font-size:9px;color:#7a4a1a;text-transform:uppercase;letter-spacing:1px">kg seco (MS)</div>
+            <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:700;color:#7a4a1a;line-height:1">${cpkms!==null?'$'+cpkms.toFixed(2):'—'}</div>
+          </div>
+        </div>
+      </div>`;
+    });
+  });
+  stats.innerHTML = cards;
+
+  const det = document.getElementById('dash-detail');
+  let html = '';
+  S.predios.forEach((p,pi)=>{
+    const ciclos = p.ciclos||3;
+    const cosechas = ciclos===1?[1]:[1,2,3];
+    let rows = '';
+    for(const cn of cosechas) {
+      for(let ti=0;ti<p.tablas.length;ti++) {
+        const td = getTablaData(pi,cn,ti);
+        const kilos = parseFloat(td.kilos)||0;
+        const cons = calcConsumosTabla(pi,cn,ti);
+        const dep = calcDepTabla(pi,cn,ti);
+        const cpk = calcCPK(pi,cn,ti);
+        const cpkms = calcCPKMS(pi,cn,ti);
+        if(kilos>0||cons>0) {
+          const haTabla = parseFloat(td.haSembradas)||p.tablas[ti].ha||0;
+          const total = calcTotalTabla(pi,cn,ti);
+          const gasHa = haTabla ? total/haTabla : null;
+          rows += `<tr>
+            <td>${p.emoji} ${p.nombre}</td>
+            <td>C${cn}</td>
+            <td>${p.tablas[ti].nombre}</td>
+            <td>${cultivoBadge(td.cultivo||'maiz')}</td>
+            <td class="mono tr">${haTabla} ha</td>
+            <td class="mono tr">${fmt(total)}</td>
+            <td class="mono tr amber">${gasHa!==null?'$'+gasHa.toFixed(2):'—'}</td>
+          </tr>`;
+        }
+      }
+    }
+    if(rows) html += rows;
+  });
+
+  det.innerHTML = html ? `<div class="tbl-wrap"><table>
+    <thead><tr><th>Predio</th><th>Cos.</th><th>Tabla</th><th>Cultivo</th><th>Ha sembradas</th><th>Gasto total</th><th>$/ha</th></tr></thead>
+    <tbody>${html}</tbody>
+  </table></div>` : `<div class="empty"><div class="empty-icon">🌱</div><div>Sin datos registrados aún</div></div>`;
+}
+
+// ══════════════════════════════════════════════
+// TABLAS CONFIG
+// ══════════════════════════════════════════════
+function renderTablas() {
+  document.getElementById('tab-ptabs').innerHTML = S.predios.map((p,i)=>
+    `<button class="ptab ${i===curPredioTab?'active':''}" onclick="curPredioTab=${i};renderTablas()">${p.emoji} ${p.nombre}</button>`
+  ).join('');
+  const pi = curPredioTab;
+  const p = S.predios[pi];
+  const totalHa = p.tablas.reduce((s,t)=>s+t.ha,0);
+
+  document.getElementById('tab-content').innerHTML = `
+    <div class="card">
+      <div class="card-head">${p.emoji} ${p.nombre} — ${p.tablas.length} tablas · ${fmtN(totalHa,2)} ha totales</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Tabla</th><th>Hectáreas</th><th>% del predio</th><th></th></tr></thead>
+        <tbody>${p.tablas.map((t,i)=>`<tr>
+          <td><strong>${t.nombre}</strong></td>
+          <td class="mono"><input type="number" value="${t.ha}" step="0.01" style="width:100px;padding:4px 8px" onchange="updateTablaHa(${i},this.value)"/></td>
+          <td class="mono">${((t.ha/totalHa)*100).toFixed(1)}%</td>
+          <td>${p.tablas.length>1?`<button class="btn btn-d" onclick="deleteTabla(${i})">✕</button>`:''}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+      <div class="btn-row" style="margin-top:12px">
+        <input type="text" id="new-tabla-nombre" placeholder="Nombre nueva tabla" style="width:180px"/>
+        <input type="number" id="new-tabla-ha" placeholder="Hectáreas" style="width:120px" step="0.01"/>
+        <button class="btn btn-p" onclick="addTabla()">+ Agregar tabla</button>
+      </div>
+    </div>`;
+}
+
+function updateTablaHa(ti, val) {
+  S.predios[curPredioTab].tablas[ti].ha = parseFloat(val)||0;
+  save(); renderTablas(); toast('✓ Hectáreas actualizadas');
+}
+
+function addTabla() {
+  const nom = document.getElementById('new-tabla-nombre').value.trim();
+  const ha = parseFloat(document.getElementById('new-tabla-ha').value)||0;
+  if(!nom||!ha) { toast('⚠️ Ingresa nombre y hectáreas',true); return; }
+  S.predios[curPredioTab].tablas.push({nombre:nom, ha});
+  save(); renderTablas(); toast('✓ Tabla agregada');
+}
+
+function deleteTabla(ti) {
+  if(S.predios[curPredioTab].tablas.length<=1) { toast('⚠️ Debe haber al menos 1 tabla',true); return; }
+  S.predios[curPredioTab].tablas.splice(ti,1);
+  save(); renderTablas(); toast('✓ Tabla eliminada');
+}
+
+// ══════════════════════════════════════════════
+// ARTÍCULOS
+// ══════════════════════════════════════════════
+function addArticulo() {
+  const nombre = document.getElementById('art-nombre').value.trim();
+  const cat = document.getElementById('art-cat').value;
+  const precio = parseFloat(document.getElementById('art-precio').value);
+  const unidad = document.getElementById('art-unidad').value.trim();
+  if(!nombre||!precio||!unidad) { toast('⚠️ Completa todos los campos',true); return; }
+  const ex = S.articulos.find(a=>a.nombre.toLowerCase()===nombre.toLowerCase());
+  if(ex) {
+    ex.precios.push({valor:precio,fecha:today()});
+    ex.categoria=cat; ex.unidad=unidad;
+    toast('✓ Precio actualizado — historial preservado');
+  } else {
+    S.articulos.push({id:uid(),nombre,categoria:cat,unidad,precios:[{valor:precio,fecha:today()}]});
+    toast('✓ Artículo creado');
+  }
+  save();
+  document.getElementById('art-nombre').value='';
+  document.getElementById('art-precio').value='';
+  document.getElementById('art-unidad').value='';
+  renderArticulos();
+}
+
+function renderArticulos() {
+  const el = document.getElementById('art-list');
+  if(!S.articulos.length) {
+    el.innerHTML='<div class="empty"><div class="empty-icon">📦</div><div>Sin artículos aún</div></div>'; return;
+  }
+  el.innerHTML=`<div class="tbl-wrap"><table>
+    <thead><tr><th>Artículo</th><th>Categoría</th><th>Unidad</th><th>Precio actual</th><th>Cambios</th><th></th></tr></thead>
+    <tbody>${S.articulos.map((a,i)=>{
+      const cur=a.precios[a.precios.length-1];
+      return `<tr>
+        <td><strong>${a.nombre}</strong></td>
+        <td>${a.categoria}</td>
+        <td class="mono">${a.unidad}</td>
+        <td class="mono amber">${fmt(cur.valor)}/${a.unidad}</td>
+        <td class="mono" style="font-size:11px;color:var(--muted)">${a.precios.length} registro(s)</td>
+        <td><button class="btn btn-d" onclick="delArticulo('${a.id}')">✕</button></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+function delArticulo(id) {
+  S.articulos=S.articulos.filter(a=>a.id!==id);
+  save(); renderArticulos(); toast('✓ Eliminado');
+}
+
+// ══════════════════════════════════════════════
+// DEPRECIACIONES
+// ══════════════════════════════════════════════
+function renderDep() {
+  document.getElementById('dep-ptabs').innerHTML = S.predios.map((p,i)=>
+    `<button class="ptab ${i===curPredioDep?'active':''}" onclick="curPredioDep=${i};renderDep()">${p.emoji} ${p.nombre}</button>`
+  ).join('');
+  renderDepContent();
+}
+
+function renderDepContent() {
+  const pi = curPredioDep;
+  const p = S.predios[pi];
+  const deps = S.depreciaciones[pi];
+  const totalAnual = calcDepAnualTotal(pi);
+
+  const tablaCheckboxes = p.tablas.map((t,i)=>
+    `<label class="check-row">
+      <input type="checkbox" class="dep-tabla-check" value="${i}" /> ${t.nombre} (${t.ha} ha)
+    </label>`
+  ).join('');
+
+  const curYear = new Date().getFullYear();
+  const depRows = deps.map((d,i)=>{
+    const tablas = d.alcance==='tablas'
+      ? (d.tablasIdx||[]).map(ti=>p.tablas[ti]?.nombre).filter(Boolean).join(', ')
+      : 'Todo el predio';
+    const aFin = d.anioFin || (d.anioInicio ? d.anioInicio + Math.floor(d.vidaUtil) : null);
+    const vigente = aFin ? curYear <= aFin : true;
+    const anioStr = d.anioInicio ? `${d.anioInicio} → ${aFin}` : '—';
+    const anioColor = d.anioInicio ? (vigente ? 'var(--green)' : 'var(--red)') : 'var(--muted)';
+    const anioMark = d.anioInicio ? (vigente ? ' ✓' : ' vencida') : '';
+    const cultivosLabel = d.aplicaCultivos==='principales'?'🌽🌿 Principales':d.aplicaCultivos==='triticale'?'🌾 Triticale':'Todos';
+    const cosIniLabel = d.cosechaInicio && d.cosechaInicio>1 ? ` · desde C${d.cosechaInicio}` : '';
+    return `<tr>
+      <td><strong>${d.nombre}</strong></td>
+      <td>${d.tipo_activo}</td>
+      <td><span class="dep-badge ${d.alcance==='general'?'dep-general':'dep-tabla'}">${d.alcance==='general'?'General':'Por tabla'}</span></td>
+      <td style="font-size:12px;color:var(--muted)">${tablas}</td>
+      <td class="mono tr">${fmt(d.valorActivo)}</td>
+      <td class="mono tr">${d.vidaUtil} años</td>
+      <td class="mono" style="font-size:11px;color:${anioColor}">${anioStr}${anioMark}${cosIniLabel}</td>
+      <td style="font-size:11px;color:var(--muted)">${cultivosLabel}</td>
+      <td class="mono tr amber">${fmt(d.costoAnual)}</td>
+      <td><button class="btn btn-d" onclick="delDep(${i})">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('dep-content').innerHTML = `
+    <div class="card">
+      <div class="card-head">⚙️ Activos de ${p.emoji} ${p.nombre}
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)">Total anual: ${fmt(totalAnual)}</span>
+      </div>
+      ${deps.length ? `
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Activo</th><th>Tipo</th><th>Alcance</th><th>Tablas</th><th>Valor</th><th>Vida útil</th><th>Período</th><th>Cultivos</th><th>Costo anual</th><th></th></tr></thead>
+          <tbody>${depRows}</tbody>
+        </table></div>
+        <div class="result">
+          <div><div class="res-lbl">Total anual depreciaciones</div><div class="res-val">${fmt(totalAnual)}</div></div>
+          <div><div class="res-lbl">Distribución</div><div class="res-sub" style="font-size:13px;color:var(--straw)">
+            ${p.ciclos===1?'100% en ciclo único':'🌾 Triticale 20% · 🌽 Maíz 40% · 🌿 Sorgo 40%'}<br>
+            Prorrateado por hectárea entre tablas
+          </div></div>
+        </div>
+      ` : `<div class="empty"><div class="empty-icon">⚙️</div><div>Sin activos. Agrega maquinaria, norias, terraplenes...</div></div>`}
+    </div>
+
+    <div class="card">
+      <div class="card-head">➕ Agregar activo depreciable</div>
+      <div class="fg3">
+        <div class="field">
+          <label>Nombre del activo</label>
+          <input type="text" id="dep-nom" placeholder="Ej: Tractor, Noria..."/>
+        </div>
+        <div class="field">
+          <label>Tipo</label>
+          <select id="dep-tipo">
+            <option>Maquinaria</option><option>Noria</option><option>Terraplén</option>
+            <option>Infraestructura</option><option>Vehículo</option><option>Otro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Alcance</label>
+          <select id="dep-alcance" onchange="toggleTablasSel(this.value)">
+            <option value="general">General — todo el predio</option>
+            <option value="tablas">Solo ciertas tablas</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Valor activo ($)</label>
+          <input type="number" id="dep-val" placeholder="0"/>
+        </div>
+        <div class="field">
+          <label>Vida útil (años)</label>
+          <input type="number" id="dep-vida" placeholder="10"/>
+        </div>
+        <div class="field">
+          <label>Año de inicio</label>
+          <input type="number" id="dep-anio" placeholder="2024" min="2000" max="2100"/>
+        </div>
+        <div class="field">
+          <label>Cosecha de inicio</label>
+          <select id="dep-cosecha-inicio">
+            <option value="1">Cosecha 1 (Dic)</option>
+            <option value="2">Cosecha 2 (Mar)</option>
+            <option value="3">Cosecha 3 (Ago)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Aplica a cultivos</label>
+          <select id="dep-cultivos">
+            <option value="todos">Todos (40-40-20)</option>
+            <option value="principales">Solo principales (Maíz/Sorgo)</option>
+            <option value="triticale">Solo Triticale</option>
+          </select>
+        </div>
+      </div>
+      <div id="dep-tablas-sel" style="display:none;margin-top:12px;padding:14px;background:var(--cream);border:1px solid var(--border)">
+        <label style="margin-bottom:8px;display:block">Selecciona las tablas donde aplica esta depreciación:</label>
+        ${tablaCheckboxes}
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-p" onclick="addDep()">Agregar activo</button>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">Costo anual = Valor ÷ Vida útil</span>
+      </div>
+    </div>`;
+}
+
+function toggleTablasSel(val) {
+  document.getElementById('dep-tablas-sel').style.display = val==='tablas'?'block':'none';
+}
+
+function addDep() {
+  const nom = document.getElementById('dep-nom').value.trim();
+  const tipo = document.getElementById('dep-tipo').value;
+  const alcance = document.getElementById('dep-alcance').value;
+  const val = parseFloat(document.getElementById('dep-val').value);
+  const vida = parseFloat(document.getElementById('dep-vida').value);
+  if(!nom||!val||!vida) { toast('⚠️ Completa todos los campos',true); return; }
+
+  let tablasIdx = [];
+  if(alcance==='tablas') {
+    document.querySelectorAll('.dep-tabla-check:checked').forEach(cb=>tablasIdx.push(parseInt(cb.value)));
+    if(!tablasIdx.length) { toast('⚠️ Selecciona al menos una tabla',true); return; }
+  }
+
+  const anioInicio = parseInt(document.getElementById('dep-anio').value) || new Date().getFullYear();
+  const anioFin = anioInicio + Math.floor(vida);
+  const cosechaInicio = parseInt(document.getElementById('dep-cosecha-inicio').value) || 1;
+  const aplicaCultivos = document.getElementById('dep-cultivos').value;
+  S.depreciaciones[curPredioDep].push({
+    id:uid(), nombre:nom, tipo_activo:tipo, alcance,
+    tablasIdx, valorActivo:val, vidaUtil:vida, costoAnual:val/vida,
+    anioInicio, anioFin, cosechaInicio, aplicaCultivos
+  });
+  save(); renderDep(); toast('✓ Activo agregado');
+}
+
+function delDep(i) {
+  S.depreciaciones[curPredioDep].splice(i,1);
+  save(); renderDep(); toast('✓ Eliminado');
+}
+
+// ══════════════════════════════════════════════
+// REGISTRO
+// ══════════════════════════════════════════════
+function renderReg() {
+  document.getElementById('reg-ptabs').innerHTML = S.predios.map((p,i)=>
+    `<button class="ptab ${i===curPredioReg?'active':''}" onclick="curPredioReg=${i};curTablaReg=0;curCosechaReg=1;renderReg()">${p.emoji} ${p.nombre}</button>`
+  ).join('');
+  const pi = curPredioReg;
+  const p = S.predios[pi];
+  const ciclos = p.ciclos||3;
+  const cosechas = ciclos===1?[1]:[1,2,3];
+  if(!cosechas.includes(curCosechaReg)) curCosechaReg=1;
+  if(curTablaReg>=p.tablas.length) curTablaReg=0;
+
+  document.getElementById('reg-ctabs').innerHTML = cosechas.map(c=>
+    `<button class="ctab ${c===curCosechaReg?'active':''}" onclick="curCosechaReg=${c};renderReg()">Cosecha ${c}</button>`
+  ).join('');
+
+  renderRegContent();
+}
+
+function renderRegContent() {
+  const pi = curPredioReg, cn = curCosechaReg, ti = curTablaReg;
+  const p = S.predios[pi];
+  const td = getTablaData(pi,cn,ti);
+  const dep = calcDepTabla(pi,cn,ti);
+  const vars = calcConsumosTabla(pi,cn,ti);
+  const total = dep+vars;
+  const kilos = parseFloat(td.kilos)||0;
+  const kgMS = kilos*((parseFloat(td.pctMS)||0)/100);
+  const cpk = calcCPK(pi,cn,ti);
+  const cpkms = calcCPKMS(pi,cn,ti);
+
+  const meta = getCosechaMeta(pi,cn);
+  const isClosed = meta.closed;
+
+  const tablaGrid = p.tablas.map((t,i)=>`
+    <div class="tabla-card ${i===ti?'active-reg':''}" onclick="${isClosed?'':' curTablaReg='+i+';renderRegContent()'}">
+      <div class="tabla-name">${t.nombre}</div>
+      <div class="tabla-ha">${(()=>{ const d=getTablaData(pi,cn,i); return d.haSembradas ? d.haSembradas+'/'+t.ha+' ha' : t.ha+' ha'; })()}</div>
+      ${cultivoBadge(getTablaData(pi,cn,i).cultivo||'maiz')}
+    </div>`).join('');
+
+  const artOpts = S.articulos.map(a=>
+    `<option value="${a.id}">${a.nombre} — ${fmt(getCurrentPrice(a.id))}/${a.unidad}</option>`
+  ).join('');
+
+  const consRows = (td.consumos||[]).map((c,i)=>`<tr>
+    <td class="mono" style="font-size:11px">${c.fecha}</td>
+    <td><strong>${c.nombre}</strong></td>
+    <td style="font-size:12px;color:var(--muted)">${c.categoria}</td>
+    <td class="mono tr">${fmtN(c.cantidad,2)} ${c.unidad}</td>
+    <td class="mono tr">${fmt(c.precioSnapshot)}/${c.unidad}</td>
+    <td class="mono tr amber">${fmt(c.cantidad*c.precioSnapshot)}</td>
+    <td><button class="btn btn-d" onclick="delConsumo(${i})">✕</button></td>
+  </tr>`).join('');
+
+  document.getElementById('reg-content').innerHTML = `
+    ${isClosed ? `<div style="background:#7a1f1f;color:white;padding:12px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
+      <span>🔒 <strong>Cosecha cerrada</strong> — Archivada el ${meta.closedDate} · Año ${meta.year}</span>
+      <button class="btn" style="background:white;color:#7a1f1f;font-size:12px" onclick="toggleCosechaClosed(${pi},${cn})">🔓 Reabrir</button>
+    </div>` : ''}
+    <div class="card">
+      <div class="card-head" style="justify-content:space-between">
+        <span>🗺️ ${p.nombre} · Cosecha ${cn}</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <label style="font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0">Año:</label>
+            <input type="number" value="${meta.year}" min="2000" max="2100" style="width:80px;padding:4px 8px;font-size:13px" ${isClosed?'disabled':''} onchange="getCosechaMeta(${pi},${cn}).year=parseInt(this.value);save()"/>
+          </div>
+          ${!isClosed ? `<button class="btn" style="background:#2a5425;color:white;font-size:11px;padding:6px 14px" onclick="toggleCosechaClosed(${pi},${cn})">🔒 Cerrar cosecha</button>` : ''}
+        </div>
+      </div>
+      <div class="tabla-grid">${tablaGrid}</div>
+    </div>
+
+    <div class="card" style="${isClosed?'opacity:0.6;pointer-events:none':''}">
+      <div class="card-head">📋 ${p.tablas[ti].nombre} — ${td.haSembradas?td.haSembradas+' / '+p.tablas[ti].ha:p.tablas[ti].ha} ha sembradas ${isClosed?'<span style="font-size:11px;color:var(--red)">🔒 Solo lectura</span>':''}</div>
+      <div class="fg4">
+        <div class="field">
+          <label>Cultivo</label>
+          <select onchange="saveTablaField('cultivo',this.value)">
+            ${Object.entries(CULTIVOS).map(([k,v])=>
+              `<option value="${k}" ${(td.cultivo||'maiz')===k?'selected':''}>${v.icon} ${v.label}</option>`
+            ).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label>Ha sembradas este ciclo</label>
+          <input type="number" value="${td.haSembradas||''}" placeholder="${p.tablas[ti].ha} (total)" step="0.01" onchange="saveTablaField('haSembradas',this.value)" style="border-color:var(--gold)"/>
+          <span style="font-size:10px;font-family:'DM Mono',monospace;color:var(--muted)">Máx: ${p.tablas[ti].ha} ha</span>
+        </div>
+        <div class="field">
+          <label>Kilos de silo</label>
+          <input type="number" value="${td.kilos||''}" placeholder="0" onchange="saveTablaField('kilos',this.value)"/>
+        </div>
+        <div class="field">
+          <label>% Materia seca</label>
+          <input type="number" value="${td.pctMS||''}" placeholder="39.77" step="0.01" onchange="saveTablaField('pctMS',this.value)"/>
+        </div>
+        <div class="field" style="justify-content:flex-end;padding-top:18px">
+          <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)">
+            Ha activas: <strong style="color:var(--amber)">${td.haSembradas||p.tablas[ti].ha} ha</strong><br>
+            kg MS: <strong style="color:var(--amber)">${kgMS?fmtN(kgMS,0):'—'}</strong><br>
+            Deprec.: <strong style="color:var(--gold)">${fmt(dep)}</strong>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    ${!isClosed ? `<div class="card">
+      <div class="card-head">➕ Registrar consumo en ${p.tablas[ti].nombre}</div>
+      ${S.articulos.length ? `
+        <div class="fg3">
+          <div class="field">
+            <label>Artículo</label>
+            <select id="reg-art">${artOpts}</select>
+          </div>
+          <div class="field">
+            <label>Cantidad</label>
+            <input type="number" id="reg-cant" placeholder="0.00" step="0.01"/>
+          </div>
+          <div class="field" style="justify-content:flex-end;padding-top:18px">
+            <span id="reg-precio-preview" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)"></span>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-p" onclick="addConsumo()">Registrar consumo</button>
+          <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">⚡ Precio se fotografia al guardar</span>
+        </div>
+      ` : '<div style="color:var(--muted);font-size:13px">Primero agrega artículos en la sección "Artículos"</div>'}
+    </div>` : ''}
+
+    ${(td.consumos||[]).length ? `
+    <div class="card">
+      <div class="card-head">📑 Consumos de ${p.tablas[ti].nombre} · Cosecha ${cn}</div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Fecha</th><th>Artículo</th><th>Categoría</th><th>Cantidad</th><th>Precio</th><th>Total</th><th></th></tr></thead>
+        <tbody>${consRows}</tbody>
+      </table></div>
+      <div class="result">
+        <div><div class="res-lbl">Consumos</div><div class="res-val">${fmt(vars)}</div></div>
+        <div><div class="res-lbl">Deprec. tabla</div><div class="res-val">${fmt(dep)}</div></div>
+        <div><div class="res-lbl">Total tabla</div><div class="res-val">${fmt(total)}</div></div>
+        <div>
+          <div class="res-lbl">$/kg silo</div>
+          <div class="res-val">${cpk!==null?'$'+cpk.toFixed(2):'—'}</div>
+          <div class="res-sub">$/kg MS: ${cpkms!==null?'$'+cpkms.toFixed(2):'—'}</div>
+        </div>
+      </div>
+    </div>` : ''}`;
+
+  // ── GRID MATERIAL CULTIVO ──
+  const artsCultivo = S.articulos.filter(a=>a.categoria==='Material de cultivo');
+  if(artsCultivo.length && !isClosed) {
+    const tablaHeaders = p.tablas.map((t,ti2)=>`<th style="text-align:center;min-width:90px">${t.nombre}<br><span style="font-weight:400;font-size:9px">${t.ha} ha</span></th>`).join('');
+    const gridRows = artsCultivo.map(art=>{
+      const precio = getCurrentPrice(art.id);
+      const cells = p.tablas.map((t,ti2)=>{
+        return `<td style="padding:4px"><input type="number" min="0" step="0.01" placeholder="—"
+          style="width:80px;padding:5px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;font-size:12px"
+          data-ti="${ti2}" data-art="${art.id}"
+          /></td>`;
+      }).join('');
+      return `<tr>
+        <td style="white-space:nowrap;padding:8px 12px"><strong>${art.nombre}</strong><br>
+          <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">${fmt(precio)}/${art.unidad}</span>
+        </td>${cells}
+      </tr>`;
+    }).join('');
+
+    const gridEl = document.createElement('div');
+    gridEl.className = 'card';
+    gridEl.innerHTML = `
+      <div class="card-head">🌱 Grid — Material de Cultivo · ${p.nombre} · Cosecha ${cn}</div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead><tr><th style="text-align:left;min-width:160px">Artículo</th>${tablaHeaders}</tr></thead>
+          <tbody>${gridRows}</tbody>
+        </table>
+      </div>
+      <div class="btn-row" style="margin-top:16px">
+        <button class="btn btn-p" id="btn-capturar-grid">✅ Capturar todo</button>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">Llena solo las celdas que aplican · las vacías se ignoran</span>
+      </div>`;
+
+    document.getElementById('reg-content').appendChild(gridEl);
+
+    document.getElementById('btn-capturar-grid').addEventListener('click', ()=>{
+      let total = 0;
+      document.querySelectorAll('#reg-content input[data-art]').forEach(inp=>{
+        const cant = parseFloat(inp.value);
+        if(!cant || cant<=0) return;
+        const artId = inp.getAttribute('data-art');
+        const ti2 = parseInt(inp.getAttribute('data-ti'));
+        const art = S.articulos.find(a=>a.id===artId);
+        if(!art) return;
+        const precio = getCurrentPrice(artId);
+        const tdx = getTablaData(pi, cn, ti2);
+        tdx.consumos.push({
+          articuloId:artId, nombre:art.nombre, categoria:art.categoria,
+          unidad:art.unidad, cantidad:cant, precioSnapshot:precio, fecha:today()
+        });
+        total++;
+      });
+      if(!total) { toast('⚠️ No hay cantidades para capturar',true); return; }
+      save();
+      renderRegContent();
+      toast(`✅ ${total} registro(s) capturados`);
+    });
+  }
+
+  // precio preview
+  const sel = document.getElementById('reg-art');
+  if(sel) {
+    const updatePreview = () => {
+      const a = S.articulos.find(x=>x.id===sel.value);
+      const el = document.getElementById('reg-precio-preview');
+      if(a&&el) el.textContent = `Precio: ${fmt(getCurrentPrice(a.id))}/${a.unidad}`;
+    };
+    sel.addEventListener('change', updatePreview);
+    updatePreview();
+  }
+}
+
+function saveTablaField(field, val) {
+  const td = getTablaData(curPredioReg, curCosechaReg, curTablaReg);
+  td[field] = val;
+  save();
+  renderRegContent();
+}
+
+function addConsumo() {
+  const artId = document.getElementById('reg-art')?.value;
+  const cant = parseFloat(document.getElementById('reg-cant')?.value);
+  if(!artId||!cant) { toast('⚠️ Selecciona artículo e ingresa cantidad',true); return; }
+  const art = S.articulos.find(a=>a.id===artId);
+  if(!art) return;
+  const precio = getCurrentPrice(artId);
+  const td = getTablaData(curPredioReg, curCosechaReg, curTablaReg);
+  td.consumos.push({
+    articuloId:artId, nombre:art.nombre, categoria:art.categoria,
+    unidad:art.unidad, cantidad:cant, precioSnapshot:precio, fecha:today()
+  });
+  save();
+  document.getElementById('reg-cant').value='';
+  renderRegContent();
+  toast(`✓ Registrado — precio: ${fmt(precio)}`);
+}
+
+function delConsumo(i) {
+  const td = getTablaData(curPredioReg, curCosechaReg, curTablaReg);
+  td.consumos.splice(i,1);
+  save(); renderRegContent(); toast('✓ Eliminado');
+}
+
+// ══════════════════════════════════════════════
+// MONITOR
+// ══════════════════════════════════════════════
+function renderMon() {
+  document.getElementById('mon-ptabs').innerHTML = S.predios.map((p,i)=>
+    `<button class="ptab ${i===curPredioMon?'active':''}" onclick="curPredioMon=${i};renderMon()">${p.emoji} ${p.nombre}</button>`
+  ).join('');
+  const pi = curPredioMon;
+  const p = S.predios[pi];
+  const ciclos = p.ciclos||3;
+  const cosechas = ciclos===1?[1]:[1,2,3];
+  const totalHa = p.tablas.reduce((s,t)=>s+t.ha,0);
+  const depAnual = calcDepAnualTotal(pi);
+
+  let html = `<div class="card">
+    <div class="card-head">📡 ${p.emoji} ${p.nombre} — Acumulado general</div>
+    <div class="stats-row" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat c1" style="padding:14px">
+        <div class="stat-lbl">Tablas</div>
+        <div class="stat-val" style="font-size:22px">${p.tablas.length}</div>
+        <div class="stat-unit">${fmtN(totalHa,2)} ha totales</div>
+      </div>
+      <div class="stat c2" style="padding:14px">
+        <div class="stat-lbl">Dep. anual total</div>
+        <div class="stat-val" style="font-size:22px">${fmt(depAnual)}</div>
+        <div class="stat-unit">todos los activos</div>
+      </div>
+      <div class="stat c3" style="padding:14px">
+        <div class="stat-lbl">Ciclos/año</div>
+        <div class="stat-val" style="font-size:22px">${ciclos}</div>
+        <div class="stat-unit">${ciclos===1?'ciclo único':'cosechas anuales'}</div>
+      </div>
+      <div class="stat c1" style="padding:14px">
+        <div class="stat-lbl">Activos dep.</div>
+        <div class="stat-val" style="font-size:22px">${S.depreciaciones[pi].length}</div>
+        <div class="stat-unit">${S.depreciaciones[pi].filter(d=>d.alcance==='general').length} gral · ${S.depreciaciones[pi].filter(d=>d.alcance==='tablas').length} x tabla</div>
+      </div>
+    </div>
+  </div>`;
+
+  for(const cn of cosechas) {
+    let tablaRows = p.tablas.map((t,ti)=>{
+      const td = getTablaData(pi,cn,ti);
+      const dep = calcDepTabla(pi,cn,ti);
+      const vars = calcConsumosTabla(pi,cn,ti);
+      const gasGen = calcGastosGeneralesTabla(pi,cn,ti);
+      const kilos = parseFloat(td.kilos)||0;
+      const cpk = calcCPK(pi,cn,ti);
+      const cpkms = calcCPKMS(pi,cn,ti);
+      const haDisplay = td.haSembradas ? `${td.haSembradas}/${t.ha}` : t.ha;
+      return `<tr>
+        <td><strong>${t.nombre}</strong></td>
+        <td>${cultivoBadge(td.cultivo||'maiz')}</td>
+        <td class="mono tr">${haDisplay} ha</td>
+        <td class="mono tr">${fmt(vars)}</td>
+        <td class="mono tr">${fmt(gasGen)}</td>
+        <td class="mono tr">${fmt(dep)}</td>
+        <td class="mono tr">${fmt(vars+gasGen+dep)}</td>
+        <td class="mono tr">${kilos?fmtN(kilos,0)+' kg':'—'}</td>
+        <td class="mono tr amber">${cpk!==null?'$'+cpk.toFixed(2):'—'}</td>
+        <td class="mono tr green">${cpkms!==null?'$'+cpkms.toFixed(2):'—'}</td>
+      </tr>`;
+    }).join('');
+
+    // Totals row
+    let totVars=0,totDep=0,totGasGen=0,totKilos=0;
+    for(let ti=0;ti<p.tablas.length;ti++) {
+      totVars+=calcConsumosTabla(pi,cn,ti);
+      totDep+=calcDepTabla(pi,cn,ti);
+      totGasGen+=calcGastosGeneralesTabla(pi,cn,ti);
+      totKilos+=parseFloat(getTablaData(pi,cn,ti).kilos)||0;
+    }
+    const totCPK = totKilos?(totVars+totGasGen+totDep)/totKilos:null;
+
+    const monMeta = getCosechaMeta(pi,cn);
+    html += `<div class="card">
+      <div class="card-head">🌾 Cosecha ${cn} · ${monMeta.year}
+        <div style="display:flex;align-items:center;gap:12px">
+          ${monMeta.closed?'<span style="font-family:\'DM Mono\',monospace;font-size:10px;background:#7a1f1f;color:white;padding:3px 8px">🔒 CERRADA ${monMeta.closedDate}</span>':'<span style="font-family:\'DM Mono\',monospace;font-size:10px;background:#e8f5e8;color:var(--green);padding:3px 8px">✓ Abierta</span>'}
+          <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)">${totKilos?fmtN(totKilos,0)+' kg totales':''}</span>
+        </div>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Tabla</th><th>Cultivo</th><th>Ha</th><th>Mat. Cultivo</th><th>Gastos Gral.</th><th>Deprec.</th><th>Total</th><th>Kilos</th><th>$/kg silo</th><th>$/kg MS</th></tr></thead>
+        <tbody>${tablaRows}
+          <tr style="background:var(--soil);color:var(--straw)">
+            <td colspan="2"><strong>TOTAL PREDIO</strong></td>
+            <td></td>
+            <td class="mono tr"><strong>${fmt(totVars)}</strong></td>
+            <td class="mono tr"><strong>${fmt(totGasGen)}</strong></td>
+            <td class="mono tr"><strong>${fmt(totDep)}</strong></td>
+            <td class="mono tr"><strong>${fmt(totVars+totGasGen+totDep)}</strong></td>
+            <td class="mono tr"><strong>${totKilos?fmtN(totKilos,0)+' kg':'—'}</strong></td>
+            <td class="mono tr" style="color:var(--gold)"><strong>${totCPK?'$'+totCPK.toFixed(2):'—'}</strong></td>
+            <td class="mono tr" style="color:var(--green)"><strong>${(()=>{let totKgMS=0;for(let ti=0;ti<p.tablas.length;ti++){const td2=getTablaData(pi,cn,ti);totKgMS+=(parseFloat(td2.kilos)||0)*((parseFloat(td2.pctMS)||0)/100);}const tot=totVars+totGasGen+totDep;return totKgMS?'$'+(tot/totKgMS).toFixed(2):'—'})()}</strong></td>
+          </tr>
+        </tbody>
+      </table></div>
+    </div>`;
+  }
+
+  document.getElementById('mon-content').innerHTML = html;
+}
+
+// ══════════════════════════════════════════════
+// REPORTES
+// ══════════════════════════════════════════════
+function renderRep() {
+  document.getElementById('rep-ptabs').innerHTML = S.predios.map((p,i)=>
+    `<button class="ptab ${i===curPredioRep?'active':''}" onclick="curPredioRep=${i};curCosechaRep=1;curTablaRep=0;renderRep()">${p.emoji} ${p.nombre}</button>`
+  ).join('');
+  const pi = curPredioRep;
+  const p = S.predios[pi];
+  const ciclos = p.ciclos||3;
+  const cosechas = ciclos===1?[1]:[1,2,3];
+  if(!cosechas.includes(curCosechaRep)) curCosechaRep=1;
+  if(curTablaRep>=p.tablas.length) curTablaRep=0;
+
+  document.getElementById('rep-ctabs').innerHTML = [
+    ...cosechas.map(c=>{
+      const m=getCosechaMeta(pi,c);
+      const tag=m.closed?'🔒 ':'✓ ';
+      return `<button class="ctab ${c===curCosechaRep&&curTablaRep===-1?'active':''}" onclick="curCosechaRep=${c};curTablaRep=-1;renderRepContent()">${tag}C${c} ${m.year} (Predio)</button>`;
+    }),
+    ...cosechas.map(c=>{
+      const m=getCosechaMeta(pi,c);
+      const tag=m.closed?'🔒 ':'✓ ';
+      return `<button class="ctab ${c===curCosechaRep&&curTablaRep>=0?'active':''}" onclick="curCosechaRep=${c};curTablaRep=0;renderRepContent()">${tag}C${c} ${m.year} (x Tabla)</button>`;
+    })
+  ].join('');
+
+  if(curTablaRep===undefined) curTablaRep=-1;
+  renderRepContent();
+}
+
+function renderRepContent() {
+  const pi = curPredioRep, cn = curCosechaRep;
+  const p = S.predios[pi];
+
+  if(curTablaRep===-1) {
+    // Predio-level report
+    const cats = ['Material de cultivo','Maquinaria','Reparaciones Riego','Luz','Ensilada','Materiales de ensilada','Nómina y gastos admin','Diesel','Sirre y Desmonte','Otro'];
+    const totalHa = p.tablas.reduce((s,t)=>s+t.ha,0);
+    let catTotals = {};
+    cats.forEach(c=>catTotals[c]=0);
+    let totalDep=0, totKilos=0, totKgMS=0, totCost=0;
+
+    for(let ti=0;ti<p.tablas.length;ti++) {
+      const td = getTablaData(pi,cn,ti);
+      const dep = calcDepTabla(pi,cn,ti);
+      totalDep+=dep;
+      totKilos+=parseFloat(td.kilos)||0;
+      totKgMS+=((parseFloat(td.kilos)||0)*((parseFloat(td.pctMS)||0)/100));
+      (td.consumos||[]).forEach(c=>{
+        if(catTotals[c.categoria]!==undefined) catTotals[c.categoria]+=(parseFloat(c.cantidad)||0)*(parseFloat(c.precioSnapshot)||0);
+        else catTotals['Otro']+=(parseFloat(c.cantidad)||0)*(parseFloat(c.precioSnapshot)||0);
+      });
+    }
+    // Add gastos generales per category
+    (S.gastosGenerales||[]).filter(g=>getCosechaFromMes(g.mes)===cn).forEach(g=>{
+      const montoPredio = getGastoParaPredio(g, pi);
+      if(catTotals[g.categoria]!==undefined) catTotals[g.categoria]+=montoPredio;
+      else catTotals['Otro']+=montoPredio;
+    });
+    totCost = Object.values(catTotals).reduce((s,v)=>s+v,0) + totalDep;
+    const cpk = totKilos?totCost/totKilos:null;
+    const cpkms = totKgMS?totCost/totKgMS:null;
+
+    let catRows = cats.map(cat=>{
+      const tot=catTotals[cat]||0;
+      return `<tr><td>${cat}</td><td><span style="background:#e8f5e8;color:var(--green);padding:2px 6px;font-size:10px">Variable</span></td>
+        <td class="mono tr">${tot?fmt(tot/totalHa):'$ —'}</td><td class="mono tr">${tot?fmt(tot):'$ —'}</td></tr>`;
+    }).join('');
+    catRows += `<tr><td>Depreciación</td><td><span style="background:#fef3e2;color:var(--amber);padding:2px 6px;font-size:10px">Constante</span></td>
+      <td class="mono tr">${fmt(totalDep/totalHa)}</td><td class="mono tr">${fmt(totalDep)}</td></tr>`;
+
+    document.getElementById('rep-content').innerHTML = `
+      <div class="card">
+        <div class="card-head">📄 Reporte — ${p.nombre} · Cosecha ${cn} · Predio completo
+          <button class="pdf-btn" onclick="printReportePredio(${pi},${cn})">⬇ Exportar PDF</button>
+        </div>
+        <div style="text-align:center;padding:14px;background:var(--soil);color:var(--straw);margin-bottom:14px">
+          <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:700">GASTOS TOTALES — ${p.nombre}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--amber);margin-top:4px">Cosecha ${cn} · Año ${getCosechaMeta(pi,cn).year} · ${p.tablas.length} tablas · ${fmtN(totalHa,2)} ha ${getCosechaMeta(pi,cn).closed?'· 🔒 CERRADA':'· ✓ Abierta'}</div>
+        </div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Categoría</th><th>Tipo</th><th>$/Ha</th><th>Gasto Total</th></tr></thead>
+          <tbody>${catRows}
+            <tr style="background:var(--soil);color:var(--straw)">
+              <td colspan="2"><strong>TOTAL</strong></td>
+              <td class="mono tr"><strong>${fmt(totCost/totalHa)}</strong></td>
+              <td class="mono tr"><strong>${fmt(totCost)}</strong></td>
+            </tr>
+          </tbody>
+        </table></div>
+        <div style="margin-top:14px;padding:14px;background:var(--soil)">
+          <div style="text-align:center;color:var(--straw);font-family:'Fraunces',serif;font-size:15px;font-weight:700;margin-bottom:10px">COSTO POR KILO</div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>Kilos silo</th><th>Kg MS</th><th>Total</th><th>$/ha</th><th>$/kg silo</th><th>$/kg MS</th></tr></thead>
+            <tbody><tr style="color:var(--straw)">
+              <td class="mono">${totKilos?fmtN(totKilos,0):'—'}</td>
+              <td class="mono">${totKgMS?fmtN(totKgMS,0):'—'}</td>
+              <td class="mono">${fmt(totCost)}</td>
+              <td class="mono">${fmt(totCost/totalHa)}</td>
+              <td class="mono amber"><strong>${cpk?'$'+cpk.toFixed(2):'—'}</strong></td>
+              <td class="mono green"><strong>${cpkms?'$'+cpkms.toFixed(2):'—'}</strong></td>
+            </tr></tbody>
+          </table></div>
+        </div>
+      </div>`;
+  } else {
+    // Per-tabla report — show tabla selector then detail
+    const tablaGrid = p.tablas.map((t,ti)=>`
+      <div class="tabla-card ${ti===curTablaRep?'active-reg':''}" onclick="curTablaRep=${ti};renderRepContent()">
+        <div class="tabla-name">${t.nombre}</div>
+        <div class="tabla-ha">${t.ha} ha</div>
+      </div>`).join('');
+
+    const ti = curTablaRep>=0?curTablaRep:0;
+    const td = getTablaData(pi,cn,ti);
+    const dep = calcDepTabla(pi,cn,ti);
+    const vars = calcConsumosTabla(pi,cn,ti);
+    const total = dep+vars;
+    const kilos = parseFloat(td.kilos)||0;
+    const kgMS = kilos*((parseFloat(td.pctMS)||0)/100);
+    const cpk = calcCPK(pi,cn,ti);
+    const cpkms = calcCPKMS(pi,cn,ti);
+
+    const cats = ['Material de cultivo','Maquinaria','Reparaciones Riego','Luz','Ensilada','Materiales de ensilada','Nómina y gastos admin','Diesel','Sirre y Desmonte','Otro'];
+    let catTotals={};
+    cats.forEach(c=>catTotals[c]=0);
+    (td.consumos||[]).forEach(c=>{
+      if(catTotals[c.categoria]!==undefined) catTotals[c.categoria]+=(parseFloat(c.cantidad)||0)*(parseFloat(c.precioSnapshot)||0);
+      else catTotals['Otro']+=(parseFloat(c.cantidad)||0)*(parseFloat(c.precioSnapshot)||0);
+    });
+    // Add gastos generales per category for this tabla
+    (S.gastosGenerales||[]).filter(g=>getCosechaFromMes(g.mes)===cn).forEach(g=>{
+      const montoTabla = getGastoParaTabla(g, pi, ti);
+      if(catTotals[g.categoria]!==undefined) catTotals[g.categoria]+=montoTabla;
+      else catTotals['Otro']+=montoTabla;
+    });
+
+    let catRows = cats.map(cat=>`<tr>
+      <td>${cat}</td>
+      <td><span style="background:#e8f5e8;color:var(--green);padding:2px 6px;font-size:10px">Variable</span></td>
+      <td class="mono tr">${catTotals[cat]?fmt(catTotals[cat]/p.tablas[ti].ha):'$ —'}</td>
+      <td class="mono tr">${catTotals[cat]?fmt(catTotals[cat]):'$ —'}</td>
+    </tr>`).join('');
+    catRows+=`<tr><td>Depreciación</td><td><span style="background:#fef3e2;color:var(--amber);padding:2px 6px;font-size:10px">Constante</span></td>
+      <td class="mono tr">${fmt(dep/p.tablas[ti].ha)}</td><td class="mono tr">${fmt(dep)}</td></tr>`;
+
+    document.getElementById('rep-content').innerHTML = `
+      <div class="card">
+        <div class="card-head">Selecciona tabla</div>
+        <div class="tabla-grid">${tablaGrid}</div>
+      </div>
+      <div class="card">
+        <div class="card-head">📄 ${p.tablas[ti].nombre} — ${p.nombre} · Cosecha ${cn}
+          <button class="pdf-btn" onclick="printReporteTabla(${pi},${cn},${ti})">⬇ Exportar PDF</button>
+        </div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Categoría</th><th>Tipo</th><th>$/Ha</th><th>Gasto Total</th></tr></thead>
+          <tbody>${catRows}
+            <tr style="background:var(--soil);color:var(--straw)">
+              <td colspan="2"><strong>TOTAL</strong></td>
+              <td class="mono tr"><strong>${fmt(total/p.tablas[ti].ha)}</strong></td>
+              <td class="mono tr"><strong>${fmt(total)}</strong></td>
+            </tr>
+          </tbody>
+        </table></div>
+        <div style="margin-top:14px;padding:14px;background:var(--soil)">
+          <div style="text-align:center;color:var(--straw);font-family:'Fraunces',serif;font-size:15px;font-weight:700;margin-bottom:10px">COSTO POR KILO</div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>Kilos silo</th><th>Kg MS</th><th>% MS</th><th>Total</th><th>$/ha</th><th>$/kg silo</th><th>$/kg MS</th></tr></thead>
+            <tbody><tr style="color:var(--straw)">
+              <td class="mono">${kilos?fmtN(kilos,0):'—'}</td>
+              <td class="mono">${kgMS?fmtN(kgMS,0):'—'}</td>
+              <td class="mono">${td.pctMS?td.pctMS+'%':'—'}</td>
+              <td class="mono">${fmt(total)}</td>
+              <td class="mono">${fmt(total/p.tablas[ti].ha)}</td>
+              <td class="mono amber"><strong>${cpk?'$'+cpk.toFixed(2):'—'}</strong></td>
+              <td class="mono green"><strong>${cpkms?'$'+cpkms.toFixed(2):'—'}</strong></td>
+            </tr></tbody>
+          </table></div>
+        </div>
+      </div>`;
+  }
+}
+
+function printReportePredio(pi, cn) {
+  const p = S.predios[pi];
+  const totalHa = p.tablas.reduce((s,t)=>s+t.ha,0);
+  const cats = ['Material de cultivo','Maquinaria','Reparaciones Riego','Luz','Ensilada','Materiales de ensilada','Nómina y gastos admin','Diesel','Sirre y Desmonte','Camiones','Otro'];
+  const catOrder = ['Material de cultivo','Maquinaria','Reparaciones Riego','Luz','Ensilada','Materiales de ensilada','Nómina y gastos admin','Diesel','Depreciación','Sirre y Desmonte'];
+  let catTotals={};
+  cats.forEach(c=>catTotals[c]=0);
+  let totalDep=0, totKilos=0, totKgMS=0;
+  // Sum consumos por tabla
+  for(let ti=0;ti<p.tablas.length;ti++) {
+    const td=getTablaData(pi,cn,ti);
+    totalDep+=calcDepTabla(pi,cn,ti);
+    totKilos+=parseFloat(td.kilos)||0;
+    totKgMS+=((parseFloat(td.kilos)||0)*((parseFloat(td.pctMS)||0)/100));
+    (td.consumos||[]).forEach(c=>{
+      if(catTotals[c.categoria]!==undefined) catTotals[c.categoria]+=(parseFloat(c.cantidad)||0)*(parseFloat(c.precioSnapshot)||0);
+      else catTotals['Otro']+=(parseFloat(c.cantidad)||0)*(parseFloat(c.precioSnapshot)||0);
+    });
+  }
+  // Sum gastos generales for this predio+cosecha
+  (S.gastosGenerales||[]).filter(g=>getGastoCosecha(g)===cn&&(g.prediosIdx||[]).includes(pi)).forEach(g=>{
+    const cat = g.categoria||'Otro';
+    if(catTotals[cat]!==undefined) catTotals[cat]+=parseFloat(g.monto)||0;
+    else catTotals['Otro']+=parseFloat(g.monto)||0;
+  });
+  const totCost=Object.values(catTotals).reduce((s,v)=>s+v,0)+totalDep;
+  const cpk=totKilos?totCost/totKilos:null;
+  const cpkms=totKgMS?totCost/totKgMS:null;
+  const fmtPDF = n => n?'$ '+Number(n).toLocaleString('es-CL',{minimumFractionDigits:2,maximumFractionDigits:2}):'$ —';
+  // Only show cats with values
+  const activeCats = cats.filter(c=>catTotals[c]>0);
+
+  const win=window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Reporte ${p.nombre} C${cn}</title>
+  <style>body{font-family:Arial,sans-serif;font-size:12px;margin:30px}h1{font-size:18px;text-align:center}h2{font-size:12px;text-align:center;color:#666;font-weight:normal;margin-bottom:20px}table{width:100%;border-collapse:collapse;margin-bottom:16px}th{background:#1a1208;color:#faf6ed;padding:8px;font-size:10px;text-align:left}td{padding:8px;border-bottom:1px solid #ddd}.tr{text-align:right}.tot{background:#1a1208;color:#faf6ed;font-weight:bold}.sec{background:#2a1c0c;color:#faf6ed;text-align:center;padding:8px;font-weight:bold;margin:14px 0 6px}.zero{color:#bbb}@media print{button{display:none}}</style>
+  </head><body>
+  <h1>GASTOS TOTALES — ${p.nombre}</h1>
+  <h2>Cosecha ${cn} · ${p.tablas.length} tablas · ${fmtN(totalHa,2)} ha · ${today()}</h2>
+  <table><thead><tr><th>Categoría</th><th class="tr">$/Ha</th><th class="tr">Gasto Total</th></tr></thead><tbody>
+  ${catOrder.map(cat=>{
+    if(cat==='Depreciación') return totalDep>0?`<tr><td>Depreciación</td><td class="tr">${fmtPDF(totalDep/totalHa)}</td><td class="tr">${fmtPDF(totalDep)}</td></tr>`:'';
+    return catTotals[cat]>0?`<tr><td>${cat}</td><td class="tr">${fmtPDF(catTotals[cat]/totalHa)}</td><td class="tr">${fmtPDF(catTotals[cat])}</td></tr>`:'';
+  }).join('')}
+  ${activeCats.filter(c=>!catOrder.includes(c)).map(cat=>`<tr><td>${cat}</td><td class="tr">${fmtPDF(catTotals[cat]/totalHa)}</td><td class="tr">${fmtPDF(catTotals[cat])}</td></tr>`).join('')}
+  <tr class="tot"><td>TOTAL</td><td class="tr">${fmtPDF(totCost/totalHa)}</td><td class="tr">${fmtPDF(totCost)}</td></tr>
+  </tbody></table>
+  <div class="sec">COSTO POR KILO</div>
+  <table><thead><tr><th>Kilos silo</th><th>Kg MS</th><th>Total</th><th>$/ha</th><th>$/kg silo</th><th>$/kg MS</th></tr></thead>
+  <tbody><tr><td>${totKilos?fmtN(totKilos,0):'—'}</td><td>${totKgMS?fmtN(totKgMS,0):'—'}</td><td>${fmtPDF(totCost)}</td><td>${fmtPDF(totCost/totalHa)}</td><td><strong>${cpk?'$ '+cpk.toFixed(2):'—'}</strong></td><td><strong>${cpkms?'$ '+cpkms.toFixed(2):'—'}</strong></td></tr></tbody></table>
+  <br><button onclick="window.print()" style="padding:10px 24px;background:#1a1208;color:#faf6ed;border:none;cursor:pointer">🖨 Imprimir / PDF</button>
+  </body></html>`);
+  win.document.close();
+}
+
+function printReporteTabla(pi, cn, ti) {
+  const p=S.predios[pi];
+  const t=p.tablas[ti];
+  const td=getTablaData(pi,cn,ti);
+  const dep=calcDepTabla(pi,cn,ti);
+  const vars=calcConsumosTabla(pi,cn,ti);
+  const total=dep+vars;
+  const kilos=parseFloat(td.kilos)||0;
+  const kgMS=kilos*((parseFloat(td.pctMS)||0)/100);
+  const cpk=kilos?total/kilos:null;
+  const cpkms=kgMS?total/kgMS:null;
+  const cats=['Material de cultivo','Maquinaria','Reparaciones Riego','Luz','Ensilada','Materiales de ensilada','Nómina y gastos admin','Diesel','Sirre y Desmonte','Otro'];
+  let catTotals={};cats.forEach(c=>catTotals[c]=0);
+  (td.consumos||[]).forEach(c=>{
+    if(catTotals[c.categoria]!==undefined)catTotals[c.categoria]+=(parseFloat(c.cantidad)||0)*(parseFloat(c.precioSnapshot)||0);
+    else catTotals['Otro']+=(parseFloat(c.cantidad)||0)*(parseFloat(c.precioSnapshot)||0);
+  });
+  const fmtPDF=n=>n?'$ '+Number(n).toLocaleString('es-CL',{minimumFractionDigits:2,maximumFractionDigits:2}):'$ —';
+  const win=window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Reporte ${t.nombre}</title>
+  <style>body{font-family:Arial,sans-serif;font-size:12px;margin:30px}h1{font-size:18px;text-align:center}h2{font-size:12px;text-align:center;color:#666;font-weight:normal;margin-bottom:20px}table{width:100%;border-collapse:collapse;margin-bottom:16px}th{background:#1a1208;color:#faf6ed;padding:8px;font-size:10px;text-align:left}td{padding:8px;border-bottom:1px solid #ddd}.tr{text-align:right}.tot{background:#1a1208;color:#faf6ed;font-weight:bold}.sec{background:#2a1c0c;color:#faf6ed;text-align:center;padding:8px;font-weight:bold;margin:14px 0 6px}@media print{button{display:none}}</style>
+  </head><body>
+  <h1>GASTOS TOTALES — ${t.nombre}</h1>
+  <h2>${p.nombre} · Cosecha ${cn} · ${t.ha} ha · ${today()}</h2>
+  <table><thead><tr><th>Categoría</th><th>Tipo</th><th class="tr">$/Ha</th><th class="tr">Gasto Total</th></tr></thead><tbody>
+  ${cats.map(cat=>`<tr><td>${cat}</td><td>Variable</td><td class="tr">${catTotals[cat]?fmtPDF(catTotals[cat]/t.ha):'$ —'}</td><td class="tr">${catTotals[cat]?fmtPDF(catTotals[cat]):'$ —'}</td></tr>`).join('')}
+  <tr><td>Depreciación</td><td>Constante</td><td class="tr">${fmtPDF(dep/t.ha)}</td><td class="tr">${fmtPDF(dep)}</td></tr>
+  <tr class="tot"><td colspan="2">TOTAL</td><td class="tr">${fmtPDF(total/t.ha)}</td><td class="tr">${fmtPDF(total)}</td></tr>
+  </tbody></table>
+  <div class="sec">COSTO POR KILO</div>
+  <table><thead><tr><th>Kilos silo</th><th>Kg MS</th><th>% MS</th><th>Total</th><th>$/ha</th><th>$/kg silo</th><th>$/kg MS</th></tr></thead>
+  <tbody><tr><td>${kilos?fmtN(kilos,0):'—'}</td><td>${kgMS?fmtN(kgMS,0):'—'}</td><td>${td.pctMS?td.pctMS+'%':'—'}</td><td>${fmtPDF(total)}</td><td>${fmtPDF(total/t.ha)}</td><td><strong>${cpk?'$ '+cpk.toFixed(2):'—'}</strong></td><td><strong>${cpkms?'$ '+cpkms.toFixed(2):'—'}</strong></td></tr></tbody></table>
+  <br><button onclick="window.print()" style="padding:10px 24px;background:#1a1208;color:#faf6ed;border:none;cursor:pointer">🖨 Imprimir / PDF</button>
+  </body></html>`);
+  win.document.close();
+}
+
+// ══════════════════════════════════════════════
+// GASTOS GENERALES
+// ══════════════════════════════════════════════
+
+// Categorías simples (monto directo)
+const CATS_SIMPLES = [
+  'Reparaciones Riego','Sirre y Desmonte','Otro'
+];
+
+// Actividades para Maquinaria, Nómina, Camiones
+const ACTIVIDADES = ['Labor','Ensilada','Sistema de riego'];
+
+// Mantenemos CATS_GENERALES para compatibilidad con datos anteriores
+const CATS_GENERALES = [
+  'Diesel','Luz','Nómina y gastos admin','Maquinaria',
+  'Reparaciones Riego','Ensilada','Materiales de ensilada',
+  'Sirre y Desmonte','Otro','Camiones'
+];
+
+// Tabs del grid de gastos
+const GASTOS_TABS = [
+  { id:'equipos',     label:'🚜 Diesel / Reparaciones', rol:'colaborador' },
+  { id:'luz',         label:'💡 Luz',                   rol:'colaborador' },
+  { id:'ensilada',    label:'🌽 Ensilada',               rol:'admin' },
+  { id:'mat_ensilada',label:'🧪 Mat. Ensilada',          rol:'colaborador' },
+  { id:'nomina',      label:'👷 Nómina',                 rol:'admin' },
+  { id:'camiones',    label:'🚛 Camiones',               rol:'admin' },
+  { id:'otros',       label:'📦 Otros',                  rol:'admin' },
+];
+
+// Keep for backward compat with old data that had mes field
+function getCosechaFromMes(mes) {
+  const map = {12:1,1:1,2:1,3:2,4:2,5:2,6:2,7:2,8:3,9:3,10:3,11:3};
+  return map[parseInt(mes)] || 1;
+}
+
+// Get total ha sembradas for a predio in a cosecha
+function getHaSembradasPredio(pi, cn) {
+  const p = S.predios[pi];
+  return p.tablas.reduce((s,t,ti)=>{
+    const td = getTablaData(pi,cn,ti);
+    return s + (parseFloat(td.haSembradas) || t.ha || 0);
+  }, 0);
+}
+
+// Get cosecha from gasto (supports both new cosecha field and legacy mes field)
+function getGastoCosecha(gasto) {
+  if(gasto.cosecha) return parseInt(gasto.cosecha);
+  if(gasto.mes) return getCosechaFromMes(gasto.mes);
+  return 1;
+}
+
+// Get gasto amount assigned to a specific predio+cosecha
+function getGastoParaPredio(gasto, pi) {
+  const cn = getGastoCosecha(gasto);
+  const prediosIdx = gasto.prediosIdx || [];
+  if(!prediosIdx.includes(pi)) return 0;
+  const totalHaSel = prediosIdx.reduce((s,idx)=>s+getHaSembradasPredio(idx,cn), 0);
+  const miHa = getHaSembradasPredio(pi, cn);
+  if(!totalHaSel) return 0;
+  return (parseFloat(gasto.monto)||0) * (miHa / totalHaSel);
+}
+
+// Get gasto amount assigned to a specific tabla
+function getGastoParaTabla(gasto, pi, ti) {
+  const montoPredio = getGastoParaPredio(gasto, pi);
+  if(!montoPredio) return 0;
+  const cn = getGastoCosecha(gasto);
+  const p = S.predios[pi];
+  const totalHaPredio = getHaSembradasPredio(pi, cn);
+  const td = getTablaData(pi, cn, ti);
+  const tablaHa = parseFloat(td.haSembradas) || p.tablas[ti]?.ha || 0;
+  if(!totalHaPredio) return 0;
+  return montoPredio * (tablaHa / totalHaPredio);
+}
+
+// Sum all gastos generales for a predio+cosecha+tabla
+function calcGastosGeneralesTabla(pi, cn, ti) {
+  if(!S.gastosGenerales) return 0;
+  return S.gastosGenerales
+    .filter(g => getGastoCosecha(g) === cn)
+    .reduce((s,g) => s + getGastoParaTabla(g, pi, ti), 0);
+}
+
+let gastosGridDraft = {};
+let gastosGridPrediosIdx = [];
+let gastosGridCn = 1;
+let gastosTab = 'equipos';
+
+function renderGastos() {
+  if(!S.gastosGenerales) S.gastosGenerales = [];
+  if(!S.equipos) S.equipos = {}; // {pi: [{id, nombre, tipo}]} tipo: tractor|noria|luz
+  const curYear = new Date().getFullYear();
+  const isAdmin = currentUser?.rol === 'admin';
+
+  // Summary by cosecha
+  const resumen = {1:0, 2:0, 3:0};
+  S.gastosGenerales.forEach(g => { resumen[getGastoCosecha(g)] += parseFloat(g.monto)||0; });
+
+  // Filter tabs by role
+  const visibleTabs = GASTOS_TABS.filter(t => isAdmin || t.rol === 'colaborador');
+
+  // Header selectors
+  const predioChecks = S.predios.map((p,i)=>`
+    <label class="check-row">
+      <input type="checkbox" class="gasto-predio-check" value="${i}" ${gastosGridPrediosIdx.includes(i)||gastosGridPrediosIdx.length===0?'checked':''}/>
+      ${p.emoji} ${p.nombre}
+    </label>`).join('');
+
+  const cosechaOpts = [1,2,3].map(cn => {
+    const anyOpen = S.predios.some((p,pi)=>!getCosechaMeta(pi,cn).closed);
+    const label = cn===1?'C1 · Triticale · Dic-Feb':cn===2?'C2 · Maíz · Mar-Jul':'C3 · Maíz/Sorgo · Ago-Nov';
+    return `<option value="${cn}" ${gastosGridCn===cn?'selected':''} ${!anyOpen?'disabled':''}>${label}${!anyOpen?' 🔒':''}</option>`;
+  }).join('');
+
+  // Tabs HTML
+  const tabsHtml = visibleTabs.map(t=>
+    `<button class="ctab ${gastosTab===t.id?'active':''}" onclick="gastosTab='${t.id}';gastosGridDraft={};renderGastos()">${t.label}</button>`
+  ).join('');
+
+  // ── Build tab content ──
+  let tabContent = '';
+  const selectedCn = gastosGridCn || 1;
+
+  if(gastosTab === 'equipos') {
+    // Equipos: tractores y norias configurados por predio
+    // Get selected predios
+    const selPredios = gastosGridPrediosIdx.length ? gastosGridPrediosIdx : S.predios.map((_,i)=>i);
+    // Equipo config per predio
+    const equipoRows = selPredios.map(pi => {
+      const p = S.predios[pi];
+      const equips = (S.equipos[pi] || []).filter(e => e.tipo==='tractor'||e.tipo==='noria');
+      if(!equips.length) return `<tr><td colspan="3" style="padding:10px 14px;color:var(--muted);font-size:12px">${p.emoji} ${p.nombre} — sin equipos. Admin debe configurarlos.</td></tr>`;
+      return equips.map(eq => {
+        const dDiesel = gastosGridDraft[`d_${pi}_${eq.id}`] || '';
+        const dRep    = gastosGridDraft[`r_${pi}_${eq.id}`] || '';
+        return `<tr>
+          <td style="padding:8px 14px;max-width:200px;overflow:hidden;text-overflow:ellipsis">${p.emoji} <strong>${eq.nombre}</strong><br><span style="font-size:10px;color:var(--muted)">${p.nombre}</span></td>
+          <td style="padding:8px 14px;text-align:right"><input type="number" min="0" step="1" placeholder="—" value="${dDiesel}"
+            style="width:120px;padding:5px 8px;text-align:right;border:1px solid #d4c0a0;font-size:13px"
+            onchange="gastosGridDraft['d_${pi}_${eq.id}']=this.value"/></td>
+          <td style="padding:8px 14px;text-align:right"><input type="number" min="0" step="1" placeholder="—" value="${dRep}"
+            style="width:120px;padding:5px 8px;text-align:right;border:1px solid #d4c0a0;font-size:13px"
+            onchange="gastosGridDraft['r_${pi}_${eq.id}']=this.value"/></td>
+        </tr>`;
+      }).join('');
+    }).join('');
+
+    // Admin: config equipos
+    const configEq = isAdmin ? `
+      <div style="margin-top:12px;padding:12px;background:var(--cream);border:1px solid var(--border)">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">⚙️ Configurar equipos</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+          <div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Predios:</div>
+            <div style="display:flex;gap:10px">${S.predios.map((p,i)=>`<label class="check-row"><input type="checkbox" class="eq-predio-check" value="${i}" checked/> ${p.emoji} ${p.nombre}</label>`).join('')}</div>
+          </div>
+          <input type="text" id="eq-nombre" placeholder="Ej: Tractor 3, Noria 1..." style="padding:5px;width:160px"/>
+          <select id="eq-tipo" style="padding:5px"><option value="tractor">Tractor</option><option value="noria">Noria</option></select>
+          <button class="btn btn-s" style="padding:5px 12px" onclick="addEquipo()">+ Agregar</button>
+        </div>
+        <div id="eq-list" style="margin-top:8px">${renderEquiposList()}</div>
+      </div>` : '';
+
+    // Precio diesel for this cosecha
+    const precioDiesel = S.precioDiesel?.[selectedCn] || '';
+    const precioDieselInput = isAdmin ? `
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 12px;background:#fff8e8;border:1px solid #d4c0a0">
+        <span style="font-size:12px;color:var(--muted)">💧 Precio diesel C${selectedCn}:</span>
+        <input type="number" min="0" step="0.01" placeholder="$/litro" value="${precioDiesel}"
+          style="width:100px;padding:4px 8px;border:1px solid #d4c0a0;font-size:13px;text-align:right"
+          onchange="if(!S.precioDiesel)S.precioDiesel={};S.precioDiesel[${selectedCn}]=parseFloat(this.value)||0;save()"/>
+        <span style="font-size:11px;color:var(--muted)">El sistema calcula Litros × Precio</span>
+      </div>` : precioDiesel ? `<div style="font-size:11px;color:var(--muted);padding:6px 12px">💧 Precio diesel C${selectedCn}: $${precioDiesel}/L</div>` : `<div style="font-size:11px;color:#7a1f1f;padding:6px 12px">⚠️ El admin aún no ha definido el precio de diesel para esta cosecha</div>`;
+
+    tabContent = `
+      ${configEq}
+      ${precioDieselInput}
+      <div style="overflow-x:auto;margin-top:12px">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed">
+        <colgroup>
+          <col style="width:220px"/>
+          <col style="width:180px"/>
+          <col style="width:180px"/>
+        </colgroup>
+        <thead><tr>
+          <th style="text-align:left;padding:8px 14px">Equipo</th>
+          <th style="text-align:right;padding:8px 14px">Diesel (Litros)</th>
+          <th style="text-align:right;padding:8px 14px">Reparación ($)</th>
+        </tr></thead>
+        <tbody>${equipoRows}</tbody>
+      </table>
+      </div>`;
+
+  } else if(gastosTab === 'luz') {
+    // Luz: puntos de luz por predio
+    const selPredios = gastosGridPrediosIdx.length ? gastosGridPrediosIdx : S.predios.map((_,i)=>i);
+    const luzRows = selPredios.map(pi => {
+      const p = S.predios[pi];
+      const puntos = (S.equipos[pi] || []).filter(e => e.tipo==='luz');
+      if(!puntos.length) return `<tr><td colspan="2" style="padding:10px 14px;color:var(--muted);font-size:12px">${p.emoji} ${p.nombre} — sin puntos de luz configurados.</td></tr>`;
+      return puntos.map(pt => {
+        const val = gastosGridDraft[`luz_${pi}_${pt.id}`] || '';
+        return `<tr>
+          <td style="padding:8px 14px;white-space:nowrap">${p.emoji} <strong>${pt.nombre}</strong></td>
+          <td style="padding:4px"><input type="number" min="0" step="1" placeholder="—" value="${val}"
+            style="width:160px;padding:5px 8px;text-align:right;border:1px solid #d4c0a0;font-size:13px"
+            onchange="gastosGridDraft['luz_${pi}_${pt.id}']=this.value"/></td>
+        </tr>`;
+      }).join('');
+    }).join('');
+
+    const configLuz = isAdmin ? `
+      <div style="margin-top:12px;padding:12px;background:var(--cream);border:1px solid var(--border)">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">⚙️ Configurar puntos de luz</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <select id="eq-predio-luz" style="padding:5px">${S.predios.map((p,i)=>`<option value="${i}">${p.emoji} ${p.nombre}</option>`).join('')}</select>
+          <input type="text" id="eq-nombre-luz" placeholder="Ej: Cerro 212, Rebombeo..." style="padding:5px;width:180px"/>
+          <button class="btn btn-s" style="padding:5px 12px" onclick="addEquipoLuz()">+ Agregar</button>
+        </div>
+      </div>` : '';
+
+    tabContent = `
+      ${configLuz}
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:12px">
+        <thead><tr>
+          <th style="text-align:left;min-width:200px">Punto de luz</th>
+          <th style="text-align:right;min-width:160px">Monto ($)</th>
+        </tr></thead>
+        <tbody>${luzRows}</tbody>
+      </table>`;
+
+  } else if(gastosTab === 'ensilada') {
+    const val = gastosGridDraft['ensilada'] || '';
+    // Sum all gastos with actividad Ensilada for this cosecha
+    const gastosEnsilada = S.gastosGenerales.filter(g =>
+      getGastoCosecha(g) === selectedCn &&
+      (g.categoria === 'Ensilada' || g.actividad === 'Ensilada')
+    );
+    const totalEnsilada = gastosEnsilada.reduce((s,g)=>s+parseFloat(g.monto||0),0);
+    const detalleRows = gastosEnsilada.map(g=>`
+      <tr>
+        <td style="padding:6px 12px;font-size:12px">${g.categoria}${g.equipo?' · '+g.equipo:''}${g.actividad&&g.actividad!=='Ensilada'?' · '+g.actividad:''}</td>
+        <td style="padding:6px 12px;font-size:12px;color:var(--muted)">${(g.prediosIdx||[]).map(pi=>S.predios[pi]?.nombre).join(', ')}</td>
+        <td style="padding:6px 12px;font-size:12px;text-align:right;font-family:'DM Mono',monospace">${fmt(g.monto)}</td>
+      </tr>`).join('');
+
+    tabContent = `
+      <div style="padding:12px 0;max-width:600px">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Monto total pagado por maquila de ensilada esta cosecha.</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;max-width:400px">
+          <thead><tr><th style="text-align:left">Concepto</th><th style="text-align:right">Monto ($)</th></tr></thead>
+          <tbody>
+            <tr><td style="padding:10px 14px"><strong>Ensilada (maquila)</strong></td>
+            <td style="padding:4px"><input type="number" min="0" step="1" placeholder="—" value="${val}"
+              style="width:160px;padding:5px 8px;text-align:right;border:1px solid #d4c0a0;font-size:13px"
+              onchange="gastosGridDraft['ensilada']=this.value"/></td></tr>
+          </tbody>
+        </table>
+
+        ${totalEnsilada > 0 ? `
+        <div style="margin-top:20px;border-top:2px solid var(--border);padding-top:16px">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">
+            📊 Total acumulado etiqueta Ensilada — C${selectedCn}
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead><tr><th style="text-align:left">Categoría</th><th style="text-align:left">Predios</th><th style="text-align:right">Monto</th></tr></thead>
+            <tbody>${detalleRows}</tbody>
+            <tfoot><tr style="background:var(--soil);color:var(--cream)">
+              <td colspan="2" style="padding:8px 12px;font-weight:700">TOTAL ENSILADA C${selectedCn}</td>
+              <td style="padding:8px 12px;text-align:right;font-weight:700;font-family:'DM Mono',monospace">${fmt(totalEnsilada)}</td>
+            </tr></tfoot>
+          </table>
+        </div>` : ''}
+      </div>`;
+
+  } else if(gastosTab === 'nomina') {
+    const rows = ACTIVIDADES.filter(a=>a!=='Sistema de riego').map((act,ai)=>{
+      const val = gastosGridDraft[`nom_${ai}`] || '';
+      return `<tr>
+        <td style="padding:8px 14px"><strong>${act}</strong></td>
+        <td style="padding:4px"><input type="number" min="0" step="1" placeholder="—" value="${val}"
+          style="width:160px;padding:5px 8px;text-align:right;border:1px solid #d4c0a0;font-size:13px"
+          onchange="gastosGridDraft['nom_${ai}']=this.value"/></td>
+      </tr>`;
+    }).join('');
+    tabContent = `
+      <table style="width:100%;border-collapse:collapse;font-size:13px;max-width:450px;margin-top:12px">
+        <thead><tr><th style="text-align:left;min-width:200px">Actividad</th><th style="text-align:right;min-width:160px">Monto ($)</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+
+  } else if(gastosTab === 'mat_ensilada') {
+    // Material de ensilada: articulos del catalogo categoria Materiales de ensilada
+    const artsEnsilada = S.articulos.filter(a=>a.categoria==='Materiales de ensilada');
+    if(!artsEnsilada.length) {
+      tabContent = `<div class="empty" style="padding:24px"><div class="empty-icon">🧪</div><div>No hay artículos de "Materiales de ensilada" en el catálogo.<br>El admin debe agregarlos primero.</div></div>`;
+    } else {
+      const matRows = artsEnsilada.map(art=>{
+        const precio = getCurrentPrice(art.id);
+        const cantVal = gastosGridDraft[`me_cant_${art.id}`] || '';
+        return `<tr>
+          <td style="padding:8px 14px"><strong>${art.nombre}</strong></td>
+          <td style="padding:4px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${fmt(precio)}/${art.unidad}</td>
+          <td style="padding:4px"><input type="number" min="0" step="0.01" placeholder="—" value="${cantVal}"
+            style="width:120px;padding:5px 8px;text-align:right;border:1px solid #d4c0a0;font-size:13px"
+            onchange="gastosGridDraft['me_cant_${art.id}']=this.value"/></td>
+          <td style="padding:8px 14px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--amber)">
+            ${cantVal && precio ? fmt(parseFloat(cantVal)*precio) : '—'}
+          </td>
+        </tr>`;
+      }).join('');
+      tabContent = `
+        <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px">
+          <thead><tr>
+            <th style="text-align:left;min-width:180px">Artículo</th>
+            <th style="text-align:center;min-width:120px">Precio</th>
+            <th style="text-align:right;min-width:120px">Cantidad</th>
+            <th style="text-align:right;min-width:120px">Total</th>
+          </tr></thead>
+          <tbody>${matRows}</tbody>
+        </table>`;
+    }
+
+  } else if(gastosTab === 'camiones') {
+    const val = gastosGridDraft['camiones'] || '';
+    tabContent = `
+      <div style="padding:16px 0;max-width:400px">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead><tr><th style="text-align:left">Concepto</th><th style="text-align:right">Monto ($)</th></tr></thead>
+          <tbody>
+            <tr><td style="padding:10px 14px"><strong>Camiones de alquiler (Ensilada)</strong></td>
+            <td style="padding:4px"><input type="number" min="0" step="1" placeholder="—" value="${val}"
+              style="width:160px;padding:5px 8px;text-align:right;border:1px solid #d4c0a0;font-size:13px"
+              onchange="gastosGridDraft['camiones']=this.value"/></td></tr>
+          </tbody>
+        </table>
+      </div>`;
+
+  } else if(gastosTab === 'otros') {
+    const rows = CATS_SIMPLES.map((cat,ci)=>{
+      const val = gastosGridDraft[`otro_${ci}`] || '';
+      const desc = gastosGridDraft[`otro_desc_${ci}`] || '';
+      return `<tr>
+        <td style="padding:8px 14px"><strong>${cat}</strong></td>
+        <td style="padding:4px"><input type="text" placeholder="Descripción..." value="${desc}"
+          style="width:200px;padding:5px 8px;border:1px solid #d4c0a0;font-size:13px"
+          onchange="gastosGridDraft['otro_desc_${ci}']=this.value"/></td>
+        <td style="padding:4px"><input type="number" min="0" step="1" placeholder="—" value="${val}"
+          style="width:140px;padding:5px 8px;text-align:right;border:1px solid #d4c0a0;font-size:13px"
+          onchange="gastosGridDraft['otro_${ci}']=this.value"/></td>
+      </tr>`;
+    }).join('');
+    tabContent = `
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:12px">
+        <thead><tr>
+          <th style="text-align:left;min-width:160px">Categoría</th>
+          <th style="text-align:left;min-width:200px">Descripción</th>
+          <th style="text-align:right;min-width:140px">Monto ($)</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  // Existing records
+  const rows = S.gastosGenerales.map((g,i)=>{
+    const cn = getGastoCosecha(g);
+    const predNombres = (g.prediosIdx||[]).map(pi=>S.predios[pi]?.emoji+' '+S.predios[pi]?.nombre).join(', ');
+    const actLabel = g.actividad ? ` · ${g.actividad}` : '';
+    const equipLabel = g.equipo ? ` · ${g.equipo}` : '';
+    const descLabel = g.descripcion ? ` — ${g.descripcion}` : '';
+    const litrosLabel = g.litros ? ` (${g.litros}L × $${g.precioPorLitro||'?'})` : '';
+    return `<tr>
+      <td><span style="font-family:'DM Mono',monospace;font-size:10px;background:#e8f5e8;color:var(--green);padding:2px 6px">C${cn} ${g.anio||''}</span></td>
+      <td>${g.categoria}${actLabel}${equipLabel}${litrosLabel}<span style="color:var(--muted);font-size:11px">${descLabel}</span></td>
+      <td style="font-size:12px;color:var(--muted)">${predNombres}</td>
+      <td class="mono tr amber">${fmt(g.monto)}</td>
+      <td><button class="btn btn-d" onclick="delGasto(${i})">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('gastos-content').innerHTML = `
+    <div class="stats-row">
+      <div class="stat c1" style="padding:14px"><div class="stat-lbl">🌾 Cosecha 1</div><div class="stat-val" style="font-size:20px">${fmt(resumen[1])}</div><div class="stat-unit">gastos generales</div></div>
+      <div class="stat c2" style="padding:14px"><div class="stat-lbl">🌽 Cosecha 2</div><div class="stat-val" style="font-size:20px">${fmt(resumen[2])}</div><div class="stat-unit">gastos generales</div></div>
+      <div class="stat c3" style="padding:14px"><div class="stat-lbl">🌿 Cosecha 3</div><div class="stat-val" style="font-size:20px">${fmt(resumen[3])}</div><div class="stat-unit">gastos generales</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">💰 Gastos Generales</div>
+      <div style="padding:14px;background:var(--cream);border:1px solid var(--border);margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+          <div>
+            <label style="display:block;margin-bottom:6px;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Predios:</label>
+            <div style="display:flex;gap:16px;flex-wrap:wrap">${predioChecks}</div>
+          </div>
+          <div class="field" style="margin:0"><label>Año</label><input type="number" id="g-anio" value="${curYear}" min="2020" max="2100" style="width:90px"/></div>
+          <div class="field" style="margin:0">
+            <label>Cosecha</label>
+            <select id="g-cosecha" onchange="gastosGridCn=parseInt(this.value);gastosGridDraft={};renderGastos()">${cosechaOpts}</select>
+          </div>
+        </div>
+      </div>
+      <div class="ctabs" style="margin-bottom:0">${tabsHtml}</div>
+      <div style="overflow-x:auto;padding:8px 0">${tabContent}</div>
+      <div class="btn-row" style="margin-top:12px">
+        <button class="btn btn-p" onclick="capturarGastos()">✅ Capturar</button>
+        <button class="btn btn-s" onclick="gastosGridDraft={};renderGastos()">Limpiar</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">📋 Gastos registrados <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)">(${S.gastosGenerales.length})</span></div>
+      ${rows ? `<div class="tbl-wrap"><table>
+        <thead><tr><th>Cosecha</th><th>Categoría</th><th>Predios</th><th>Monto</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>` : '<div class="empty"><div class="empty-icon">💰</div><div>Sin gastos registrados aún</div></div>'}
+    </div>`;
+}
+
+function renderEquiposList() {
+  const out = [];
+  S.predios.forEach((p,pi)=>{
+    const equips = (S.equipos[pi]||[]).filter(e=>e.tipo!=='luz');
+    equips.forEach((eq,ei)=>{
+      out.push(`<span style="display:inline-flex;align-items:center;gap:6px;margin:3px;padding:3px 8px;background:#e8dcc8;font-size:11px">
+        ${p.emoji} ${eq.nombre}
+        <button onclick="delEquipo(${pi},${ei})" style="border:none;background:none;cursor:pointer;color:#7a1f1f;font-size:12px">✕</button>
+      </span>`);
+    });
+  });
+  return out.join('') || '<span style="font-size:11px;color:var(--muted)">Sin equipos configurados</span>';
+}
+
+function addEquipo() {
+  const nombre = document.getElementById('eq-nombre').value.trim();
+  const tipo = document.getElementById('eq-tipo').value;
+  if(!nombre) { toast('⚠️ Ingresa el nombre del equipo',true); return; }
+  const prediosSelIdx = [];
+  document.querySelectorAll('.eq-predio-check:checked').forEach(cb=>prediosSelIdx.push(parseInt(cb.value)));
+  if(!prediosSelIdx.length) { toast('⚠️ Selecciona al menos un predio',true); return; }
+  prediosSelIdx.forEach(pi => {
+    if(!S.equipos[pi]) S.equipos[pi] = [];
+    // Avoid duplicates
+    if(!S.equipos[pi].find(e=>e.nombre===nombre&&e.tipo===tipo))
+      S.equipos[pi].push({id:uid(), nombre, tipo});
+  });
+  document.getElementById('eq-nombre').value = '';
+  save();
+  renderGastos();
+  toast('✓ Equipo agregado en ' + prediosSelIdx.length + ' predio(s)');
+}
+
+function addEquipoLuz() {
+  const pi = parseInt(document.getElementById('eq-predio-luz').value);
+  const nombre = document.getElementById('eq-nombre-luz').value.trim();
+  if(!nombre) { toast('⚠️ Ingresa el nombre del punto de luz',true); return; }
+  if(!S.equipos[pi]) S.equipos[pi] = [];
+  S.equipos[pi].push({id:uid(), nombre, tipo:'luz'});
+  document.getElementById('eq-nombre-luz').value = '';
+  save();
+  renderGastos();
+  toast('✓ Punto de luz agregado');
+}
+
+function delEquipo(pi, ei) {
+  const equips = S.equipos[pi].filter(e=>e.tipo!=='luz');
+  const eq = equips[ei];
+  S.equipos[pi] = S.equipos[pi].filter(e=>e.id!==eq.id);
+  save(); renderGastos(); toast('✓ Eliminado');
+}
+
+
+function updateGastosDraft(ci, cn, val) {
+  if(!gastosGridDraft[ci]) gastosGridDraft[ci] = {};
+  gastosGridDraft[ci][cn] = val;
+}
+
+function capturarGastos() {
+  const anio = parseInt(document.getElementById('g-anio').value) || new Date().getFullYear();
+  const prediosIdx = [];
+  document.querySelectorAll('.gasto-predio-check:checked').forEach(cb=>prediosIdx.push(parseInt(cb.value)));
+  if(!prediosIdx.length) { toast('⚠️ Selecciona al menos un predio',true); return; }
+
+  const cn = gastosGridCn || 1;
+  const anyOpen = S.predios.some((p,pi)=>!getCosechaMeta(pi,cn).closed);
+  if(!anyOpen) { toast('⚠️ Esta cosecha está cerrada',true); return; }
+
+  if(!S.gastosGenerales) S.gastosGenerales = [];
+  let total = 0;
+
+  if(gastosTab === 'equipos') {
+    const precioDieselCn = (S.precioDiesel && S.precioDiesel[cn]) || 0;
+    S.predios.forEach((p,pi)=>{
+      if(!prediosIdx.includes(pi)) return;
+      (S.equipos[pi]||[]).filter(e=>e.tipo==='tractor'||e.tipo==='noria').forEach(eq=>{
+        const litros = parseFloat(gastosGridDraft[`d_${pi}_${eq.id}`]);
+        const rep    = parseFloat(gastosGridDraft[`r_${pi}_${eq.id}`]);
+        if(litros>0) {
+          const montoDiesel = precioDieselCn ? litros * precioDieselCn : litros; // fallback to amount if no price
+          S.gastosGenerales.push({id:uid(),cosecha:cn,anio,categoria:'Diesel',equipo:eq.nombre,litros,precioPorLitro:precioDieselCn,monto:montoDiesel,prediosIdx:[pi],fecha:today()});
+          total++;
+        }
+        if(rep>0) { S.gastosGenerales.push({id:uid(),cosecha:cn,anio,categoria:'Maquinaria',equipo:eq.nombre,monto:rep,prediosIdx:[pi],fecha:today()}); total++; }
+      });
+    });
+
+  } else if(gastosTab === 'luz') {
+    S.predios.forEach((p,pi)=>{
+      if(!prediosIdx.includes(pi)) return;
+      (S.equipos[pi]||[]).filter(e=>e.tipo==='luz').forEach(pt=>{
+        const monto = parseFloat(gastosGridDraft[`luz_${pi}_${pt.id}`]);
+        if(monto>0) { S.gastosGenerales.push({id:uid(),cosecha:cn,anio,categoria:'Luz',equipo:pt.nombre,monto,prediosIdx:[pi],fecha:today()}); total++; }
+      });
+    });
+
+  } else if(gastosTab === 'ensilada') {
+    const monto = parseFloat(gastosGridDraft['ensilada']);
+    if(monto>0) { S.gastosGenerales.push({id:uid(),cosecha:cn,anio,categoria:'Ensilada',monto,prediosIdx,fecha:today()}); total++; }
+
+  } else if(gastosTab === 'nomina') {
+    ACTIVIDADES.filter(a=>a!=='Sistema de riego').forEach((act,ai)=>{
+      const monto = parseFloat(gastosGridDraft[`nom_${ai}`]);
+      if(monto>0) { S.gastosGenerales.push({id:uid(),cosecha:cn,anio,categoria:'Nómina y gastos admin',actividad:act,monto,prediosIdx,fecha:today()}); total++; }
+    });
+
+  } else if(gastosTab === 'mat_ensilada') {
+    const artsEnsilada = S.articulos.filter(a=>a.categoria==='Materiales de ensilada');
+    artsEnsilada.forEach(art=>{
+      const cant = parseFloat(gastosGridDraft[`me_cant_${art.id}`]);
+      if(!cant||cant<=0) return;
+      const precio = getCurrentPrice(art.id) || 0;
+      const monto = cant * precio;
+      S.gastosGenerales.push({id:uid(),cosecha:cn,anio,categoria:'Materiales de ensilada',equipo:art.nombre,litros:cant,precioPorLitro:precio,monto,prediosIdx,fecha:today()});
+      total++;
+    });
+
+  } else if(gastosTab === 'camiones') {
+    const monto = parseFloat(gastosGridDraft['camiones']);
+    if(monto>0) { S.gastosGenerales.push({id:uid(),cosecha:cn,anio,categoria:'Camiones',actividad:'Ensilada',monto,prediosIdx,fecha:today()}); total++; }
+
+  } else if(gastosTab === 'otros') {
+    CATS_SIMPLES.forEach((cat,ci)=>{
+      const monto = parseFloat(gastosGridDraft[`otro_${ci}`]);
+      const descripcion = gastosGridDraft[`otro_desc_${ci}`] || '';
+      if(monto>0) { S.gastosGenerales.push({id:uid(),cosecha:cn,anio,categoria:cat,descripcion,monto,prediosIdx,fecha:today()}); total++; }
+    });
+  }
+
+  if(!total) { toast('⚠️ No hay montos para capturar',true); return; }
+  gastosGridDraft = {};
+  gastosGridPrediosIdx = prediosIdx;
+  save();
+  renderGastos();
+  toast(`✅ ${total} gasto(s) capturado(s)`);
+}
+
+function delGasto(i) {
+  S.gastosGenerales.splice(i,1);
+  save(); renderGastos(); toast('✓ Eliminado');
+}
+
+// ══════════════════════════════════════════════
+// GRID MATERIAL DE CULTIVO
+// ══════════════════════════════════════════════
+let curPredioGrid=0, curCosechaGrid=1;
+let gridDraft = {}; // {tablaIdx: {articuloId: cantidad}}
+
+function renderGrid() {
+  document.getElementById('grid-ptabs').innerHTML = S.predios.map((p,i)=>
+    `<button class="ptab ${i===curPredioGrid?'active':''}" onclick="curPredioGrid=${i};curCosechaGrid=1;gridDraft={};renderGrid()">${p.emoji} ${p.nombre}</button>`
+  ).join('');
+
+  const pi = curPredioGrid;
+  const p = S.predios[pi];
+  const ciclos = p.ciclos||3;
+  const cosechas = ciclos===1?[1]:[1,2,3];
+  if(!cosechas.includes(curCosechaGrid)) curCosechaGrid=1;
+
+  document.getElementById('grid-ctabs').innerHTML = cosechas.map(c=>
+    `<button class="ctab ${c===curCosechaGrid?'active':''}" onclick="curCosechaGrid=${c};gridDraft={};renderGridContent()">Cosecha ${c}</button>`
+  ).join('');
+
+  renderGridContent();
+}
+
+function renderGridContent() {
+  const pi = curPredioGrid, cn = curCosechaGrid;
+  const p = S.predios[pi];
+  const artsCultivo = S.articulos.filter(a=>a.categoria==='Material de cultivo');
+
+  if(!artsCultivo.length) {
+    document.getElementById('grid-content').innerHTML = `<div class="card"><div class="empty"><div class="empty-icon">🌱</div><div>No hay artículos de "Material de cultivo" en el catálogo.<br>El admin debe agregarlos primero.</div></div></div>`;
+    return;
+  }
+
+  // Build grid headers (tablas)
+  const tablaHeaders = p.tablas.map((t,ti)=>`<th style="text-align:center;min-width:90px">${t.nombre}<br><span style="font-weight:400;font-size:9px">${t.ha} ha</span></th>`).join('');
+
+  // Build grid rows (articulos)
+  const rows = artsCultivo.map(art=>{
+    const precio = getCurrentPrice(art.id);
+    const cells = p.tablas.map((t,ti)=>{
+      const draftVal = gridDraft[ti]?.[art.id] || '';
+      return `<td style="padding:4px"><input type="number" min="0" step="0.01" placeholder="—"
+        value="${draftVal}"
+        style="width:80px;padding:5px;text-align:center;border:1px solid var(--border);font-family:'DM Mono',monospace;font-size:12px"
+        onchange="updateGridDraft(${ti},'${art.id}',this.value)"
+        /></td>`;
+    }).join('');
+    return `<tr>
+      <td style="white-space:nowrap"><strong>${art.nombre}</strong><br>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">${fmt(precio)}/${art.unidad}</span>
+      </td>
+      ${cells}
+    </tr>`;
+  }).join('');
+
+  document.getElementById('grid-content').innerHTML = `
+    <div class="card">
+      <div class="card-head">🌱 ${p.nombre} · Cosecha ${cn} · Material de cultivo</div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead><tr>
+            <th style="text-align:left;min-width:160px">Artículo</th>
+            ${tablaHeaders}
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <div class="btn-row" style="margin-top:16px">
+        <button class="btn btn-p" onclick="capturarGrid()">✅ Capturar todo</button>
+        <button class="btn btn-s" onclick="gridDraft={};renderGridContent()">Limpiar</button>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">Solo llena las celdas que aplican — las vacías se ignoran</span>
+      </div>
+    </div>`;
+}
+
+function updateGridDraft(ti, artId, val) {
+  if(!gridDraft[ti]) gridDraft[ti] = {};
+  gridDraft[ti][artId] = val;
+}
+
+function capturarGrid() {
+  const pi = curPredioGrid, cn = curCosechaGrid;
+  let total = 0;
+  for(const [tiStr, arts] of Object.entries(gridDraft)) {
+    const ti = parseInt(tiStr);
+    for(const [artId, cantStr] of Object.entries(arts)) {
+      const cant = parseFloat(cantStr);
+      if(!cant || cant <= 0) continue;
+      const art = S.articulos.find(a=>a.id===artId);
+      if(!art) continue;
+      const precio = getCurrentPrice(artId);
+      const td = getTablaData(pi, cn, ti);
+      td.consumos.push({
+        articuloId:artId, nombre:art.nombre, categoria:art.categoria,
+        unidad:art.unidad, cantidad:cant, precioSnapshot:precio, fecha:today()
+      });
+      total++;
+    }
+  }
+  if(!total) { toast('⚠️ No hay cantidades para capturar',true); return; }
+  gridDraft = {};
+  save();
+  renderGridContent();
+  toast(`✅ ${total} registro(s) capturados`);
+}
+
+// TOAST
+function toast(msg,warn=false) {
+  const old=document.querySelector('.toast');if(old)old.remove();
+  const t=document.createElement('div');t.className='toast';t.textContent=msg;
+  if(warn)t.style.background='#7a1f1f';
+  document.body.appendChild(t);setTimeout(()=>t.remove(),2800);
+}
+
+// INIT
+curTablaRep=-1;
+checkRemembered();
+loadState();
+</script>
+</body>
+</html>
