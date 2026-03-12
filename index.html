@@ -130,6 +130,8 @@ tr:hover td { background:var(--cream); }
 .tabla-card:hover { border-color:var(--gold); }
 .tabla-card.selected { border-color:var(--gold); background:rgba(208,140,40,0.1); }
 .tabla-card.active-reg { border-color:var(--green); background:rgba(42,84,37,0.08); }
+.tabla-card.sin-siembra { opacity:0.55; border-style:dashed; }
+.cultivo-alfalfa { background:#e0f0e8; color:#1a6b3a; }
 .tabla-name { font-weight:700; font-size:13px; color:var(--soil); }
 .tabla-ha { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); margin-top:2px; }
 .tabla-cultivo { font-size:10px; margin-top:4px; padding:2px 6px; display:inline-block; }
@@ -490,7 +492,7 @@ function defaultState() {
 }
 
 function emptyTablaData() {
-  return { cultivo:'maiz', kilos:'', pctMS:'', haSembradas:'', consumos:[] };
+  return { cultivo:'maiz', kilos:'', pctMS:'', haSembradas:'', consumos:[], sinSiembra:false };
 }
 
 let S = defaultState();
@@ -530,11 +532,12 @@ function fmtN(n,d=2) {
 }
 
 const CULTIVOS = {
-  maiz:  { label:'Maíz',  icon:'🌽', css:'cultivo-maiz',  pct:40 },
-  trigo: { label:'Triticale', icon:'🌾', css:'cultivo-trigo', pct:20 },
-  sorgo: { label:'Sorgo', icon:'🌿', css:'cultivo-sorgo', pct:40 },
-  higo:  { label:'Higo',  icon:'🍃', css:'cultivo-otro',  pct:40 },
-  otro:  { label:'Otro',  icon:'🌱', css:'cultivo-otro',  pct:40 }
+  maiz:    { label:'Maíz',      icon:'🌽', css:'cultivo-maiz',    pct:40 },
+  trigo:   { label:'Triticale', icon:'🌾', css:'cultivo-trigo',   pct:20 },
+  sorgo:   { label:'Sorgo',     icon:'🌿', css:'cultivo-sorgo',   pct:40 },
+  higo:    { label:'Higo',      icon:'🍃', css:'cultivo-otro',    pct:40 },
+  alfalfa: { label:'Alfalfa',   icon:'🟢', css:'cultivo-alfalfa', pct:40, anual:true },
+  otro:    { label:'Otro',      icon:'🌱', css:'cultivo-otro',    pct:40 }
 };
 
 function cultivoBadge(c) {
@@ -591,9 +594,12 @@ function calcDepTabla(pi, cn, ti) {
   const td = getTablaData(pi,cn,ti);
   // Use haSembradas if set, otherwise fall back to tabla's total ha
   const tablaHa = parseFloat(td.haSembradas) || predio.tablas[ti]?.ha || 0;
-  // Total ha for this cosecha = sum of haSembradas (or default ha) across all tablas
+  // Si la tabla está marcada sin siembra, no asume ningún costo
+  if(td.sinSiembra) return 0;
+  // Total ha for this cosecha = sum of haSembradas (or default ha) across active tablas only
   const totalHa = predio.tablas.reduce((s,t,idx)=>{
     const tdx = getTablaData(pi,cn,idx);
+    if(tdx.sinSiembra) return s;
     return s + (parseFloat(tdx.haSembradas) || t.ha || 0);
   },0);
   const ciclos = predio.ciclos || 3;
@@ -1120,10 +1126,10 @@ function renderRegContent() {
   const isClosed = meta.closed;
 
   const tablaGrid = p.tablas.map((t,i)=>`
-    <div class="tabla-card ${i===ti?'active-reg':''}" onclick="${isClosed?'':' curTablaReg='+i+';renderRegContent()'}">
+    <div class="tabla-card ${i===ti?'active-reg':''} ${(()=>{const d=getTablaData(pi,cn,i);return d.sinSiembra?'sin-siembra':'';})()}" onclick="${isClosed?'':' curTablaReg='+i+';renderRegContent()'}">
       <div class="tabla-name">${t.nombre}</div>
-      <div class="tabla-ha">${(()=>{ const d=getTablaData(pi,cn,i); return d.haSembradas ? d.haSembradas+'/'+t.ha+' ha' : t.ha+' ha'; })()}</div>
-      ${cultivoBadge(getTablaData(pi,cn,i).cultivo||'maiz')}
+      <div class="tabla-ha">${(()=>{ const d=getTablaData(pi,cn,i); if(d.sinSiembra) return '<span style="color:#999;font-size:10px">Sin siembra</span>'; return d.haSembradas ? d.haSembradas+'/'+t.ha+' ha' : t.ha+' ha'; })()}</div>
+      ${(()=>{ const d=getTablaData(pi,cn,i); return d.sinSiembra ? '<span style="font-size:10px;background:#eee;color:#999;padding:2px 6px">⏸ Vacante</span>' : cultivoBadge(d.cultivo||'maiz'); })()}
     </div>`).join('');
 
   const artOpts = S.articulos.map(a=>
@@ -1160,7 +1166,11 @@ function renderRegContent() {
     </div>
 
     <div class="card" style="${isClosed?'opacity:0.6;pointer-events:none':''}">
-      <div class="card-head">📋 ${p.tablas[ti].nombre} — ${td.haSembradas?td.haSembradas+' / '+p.tablas[ti].ha:p.tablas[ti].ha} ha sembradas ${isClosed?'<span style="font-size:11px;color:var(--red)">🔒 Solo lectura</span>':''}</div>
+      <div class="card-head" style="justify-content:space-between">
+        <span>📋 ${p.tablas[ti].nombre} — ${td.sinSiembra?'<span style="color:#999">⏸ Sin siembra esta cosecha</span>':td.haSembradas?td.haSembradas+' / '+p.tablas[ti].ha+' ha sembradas':p.tablas[ti].ha+' ha sembradas'} ${isClosed?'<span style="font-size:11px;color:var(--red)">🔒 Solo lectura</span>':''}</span>
+        ${!isClosed?`<button class="btn btn-s" style="${td.sinSiembra?'background:#555;color:white':'background:#eee;color:#555'};font-size:11px;padding:5px 12px" onclick="saveTablaField('sinSiembra',${!td.sinSiembra});renderRegContent()">${td.sinSiembra?'⏸ Vacante — Activar':'⏸ Marcar vacante'}</button>`:''}
+      </div>
+      ${td.sinSiembra ? `<div style="padding:20px;text-align:center;color:#999;font-size:13px">Esta tabla no tiene siembra en Cosecha ${cn}. No asume costos de prorrateo.</div>` : `
       <div class="fg4">
         <div class="field">
           <label>Cultivo</label>
@@ -1175,6 +1185,22 @@ function renderRegContent() {
           <input type="number" value="${td.haSembradas||''}" placeholder="${p.tablas[ti].ha} (total)" step="0.01" onchange="saveTablaField('haSembradas',this.value)" style="border-color:var(--gold)"/>
           <span style="font-size:10px;font-family:'DM Mono',monospace;color:var(--muted)">Máx: ${p.tablas[ti].ha} ha</span>
         </div>
+        ${(td.cultivo||'maiz')==='alfalfa' ? `
+        <div class="field">
+          <label>Kilos henificados</label>
+          <input type="number" value="${td.kilos||''}" placeholder="0" onchange="saveTablaField('kilos',this.value)"/>
+        </div>
+        <div class="field">
+          <label>Precio venta ($/kg)</label>
+          <input type="number" value="${td.precioVenta||''}" placeholder="0.00" step="0.01" onchange="saveTablaField('precioVenta',this.value)" style="border-color:var(--green)"/>
+        </div>
+        <div class="field" style="justify-content:flex-end;padding-top:18px">
+          <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)">
+            Ha: <strong style="color:var(--amber)">${p.tablas[ti].ha} ha</strong><br>
+            Ingreso: <strong style="color:var(--green)">${(td.kilos&&td.precioVenta)?fmt(td.kilos*td.precioVenta):'—'}</strong><br>
+            Deprec.: <strong style="color:var(--gold)">${fmt(dep)}</strong>
+          </span>
+        </div>` : `
         <div class="field">
           <label>Kilos de silo</label>
           <input type="number" value="${td.kilos||''}" placeholder="0" onchange="saveTablaField('kilos',this.value)"/>
@@ -1189,8 +1215,8 @@ function renderRegContent() {
             kg MS: <strong style="color:var(--amber)">${kgMS?fmtN(kgMS,0):'—'}</strong><br>
             Deprec.: <strong style="color:var(--gold)">${fmt(dep)}</strong>
           </span>
-        </div>
-      </div>
+        </div>`}
+      </div>`}
     </div>
 
     ${!isClosed ? `<div class="card">
@@ -1797,6 +1823,8 @@ function getGastoParaTabla(gasto, pi, ti) {
 
 // Sum all gastos generales for a predio+cosecha+tabla
 function calcGastosGeneralesTabla(pi, cn, ti) {
+  const tdCheck = getTablaData(pi,cn,ti);
+  if(tdCheck.sinSiembra) return 0;
   if(!S.gastosGenerales) return 0;
   return S.gastosGenerales
     .filter(g => getGastoCosecha(g) === cn)
