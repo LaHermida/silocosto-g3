@@ -2124,54 +2124,70 @@ function renderGastos() {
         💧 Precio diesel C${selectedCn}: ${precioDiesel ? '<strong>$'+precioDiesel+'/L</strong> — captura litros y el admin cierra el precio' : '<em>pendiente — registra litros, el admin define el precio al cierre</em>'}
       </div>`;
 
-    // ── Tabla unificada todos los equipos de todos los predios ──
-    // Collect all tractores/implementos across all predios
-    const todosEquipos = [];
+    // ── Tabla unificada — agrupar equipos por nombre ──
+    // Collect unique equipo names across all predios
+    const equipoNombres = [];
     S.predios.forEach((p,pi)=>{
-      (S.equipos[pi]||[]).filter(e=>e.tipo==='tractor'||e.tipo==='implemento').forEach(eq=>{
-        todosEquipos.push({pi, p, eq});
+      (S.equipos[pi]||[]).filter(e=>e.tipo==='tractor'||e.tipo==='noria'||e.tipo==='implemento').forEach(eq=>{
+        if(!equipoNombres.find(x=>x.nombre===eq.nombre&&x.tipo===eq.tipo))
+          equipoNombres.push({nombre:eq.nombre, tipo:eq.tipo});
       });
     });
+    // For each unique equipo, collect which predios have it
+    const equiposAgrupados = equipoNombres.map(({nombre,tipo})=>{
+      const prediosConEq = [];
+      S.predios.forEach((p,pi)=>{
+        const eq = (S.equipos[pi]||[]).find(e=>e.nombre===nombre&&e.tipo===tipo);
+        if(eq) prediosConEq.push({pi,p,eq});
+      });
+      return {nombre,tipo,predios:prediosConEq};
+    });
 
-    if(!todosEquipos.length) {
+    if(!equiposAgrupados.length) {
       tabContent = `${configEq}${precioDieselInput}<div class="empty"><div class="empty-icon">🚜</div><div>Sin equipos configurados</div></div>`;
     } else {
-      // ── Sección 1: Servicios y Reparaciones ──
-      const servRepRows = todosEquipos.map(({pi,p,eq})=>{
-        const dServ = gastosGridDraft[`s_${pi}_${eq.id}`] || '';
-        const dRep  = gastosGridDraft[`r_${pi}_${eq.id}`] || '';
-        const histServ = S.gastosGenerales.filter(g=>getGastoCosecha(g)===selectedCn&&g.equipo===eq.nombre&&(g.prediosIdx||[]).includes(pi)&&g.categoria==='Maquinaria');
-        const totServ = histServ.reduce((s,g)=>s+parseFloat(g.monto||0),0);
+      // ── Sección 1: Servicios y Reparaciones (agrupado por equipo) ──
+      const servRepRows = equiposAgrupados.map(({nombre,tipo,predios})=>{
+        const predioTags = predios.map(({p})=>`${p.emoji} ${p.nombre}`).join(', ');
+        const dServ = gastosGridDraft[`s_${nombre}`] || '';
+        const dRep  = gastosGridDraft[`r_${nombre}`] || '';
+        const totServ = predios.reduce((s,{pi})=>{
+          return s + S.gastosGenerales.filter(g=>getGastoCosecha(g)===selectedCn&&g.equipo===nombre&&(g.prediosIdx||[]).includes(pi)&&g.categoria==='Maquinaria').reduce((a,g)=>a+parseFloat(g.monto||0),0);
+        },0);
         return `<tr>
-          <td style="padding:7px 12px;font-weight:600;white-space:nowrap">${eq.nombre}</td>
-          <td style="padding:7px 12px;font-size:11px;color:var(--muted)">${p.emoji} ${p.nombre}</td>
+          <td style="padding:7px 12px;font-weight:600;white-space:nowrap">${nombre}</td>
+          <td style="padding:7px 12px;font-size:11px;color:var(--muted)">${predioTags}</td>
           <td style="padding:4px 8px;text-align:right"><input type="number" min="0" step="1" placeholder="—" value="${dServ}"
             style="width:130px;padding:4px 7px;text-align:right;border:1px solid #d4c0a0;font-size:13px"
-            onchange="gastosGridDraft['s_${pi}_${eq.id}']=this.value"/></td>
+            onchange="gastosGridDraft['s_${nombre}']=this.value"/></td>
           <td style="padding:4px 8px;text-align:right"><input type="number" min="0" step="1" placeholder="—" value="${dRep}"
             style="width:130px;padding:4px 7px;text-align:right;border:1px solid #d4c0a0;font-size:13px"
-            onchange="gastosGridDraft['r_${pi}_${eq.id}']=this.value"/></td>
+            onchange="gastosGridDraft['r_${nombre}']=this.value"/></td>
           <td style="padding:7px 12px;text-align:right;font-family:'DM Mono',monospace;color:var(--amber);font-size:12px">${totServ?fmt(totServ):'—'}</td>
-          <td style="padding:4px">${isAdmin?`<button class="btn btn-d" style="font-size:10px;padding:2px 6px" onclick="delEquipoByNombre(${pi},'${eq.id}')">✕</button>`:''}</td>
+          <td style="padding:4px">${isAdmin?`<button class="btn btn-d" style="font-size:10px;padding:2px 6px" onclick="delEquipoTodos('${nombre}','${tipo}')">✕</button>`:''}</td>
         </tr>`;
       }).join('');
 
-      // ── Sección 2: Diesel (solo tractores, no implementos) ──
-      const dieselEquipos = todosEquipos.filter(({eq})=>eq.tipo!=='implemento');
-      const dieselRows = dieselEquipos.map(({pi,p,eq})=>{
-        const dDiesel = gastosGridDraft[`d_${pi}_${eq.id}`] || '';
-        const histDiesel = S.gastosGenerales.filter(g=>getGastoCosecha(g)===selectedCn&&g.equipo===eq.nombre&&(g.prediosIdx||[]).includes(pi)&&g.categoria==='Diesel');
-        const totLitros = histDiesel.reduce((s,g)=>s+(parseFloat(g.litros||0)),0);
-        const totDiesel = histDiesel.reduce((s,g)=>s+parseFloat(g.monto||0),0);
+      // ── Sección 2: Diesel (solo tractores y norias) ──
+      const dieselAgrupados = equiposAgrupados.filter(({tipo})=>tipo!=='implemento');
+      const dieselRows = dieselAgrupados.map(({nombre,tipo,predios})=>{
+        const predioTags = predios.map(({p})=>`${p.emoji} ${p.nombre}`).join(', ');
+        const dDiesel = gastosGridDraft[`d_${nombre}`] || '';
+        const totLitros = predios.reduce((s,{pi})=>{
+          return s + S.gastosGenerales.filter(g=>getGastoCosecha(g)===selectedCn&&g.equipo===nombre&&(g.prediosIdx||[]).includes(pi)&&g.categoria==='Diesel').reduce((a,g)=>a+(parseFloat(g.litros||0)),0);
+        },0);
+        const totDiesel = predios.reduce((s,{pi})=>{
+          return s + S.gastosGenerales.filter(g=>getGastoCosecha(g)===selectedCn&&g.equipo===nombre&&(g.prediosIdx||[]).includes(pi)&&g.categoria==='Diesel').reduce((a,g)=>a+parseFloat(g.monto||0),0);
+        },0);
         return `<tr>
-          <td style="padding:7px 12px;font-weight:600;white-space:nowrap">${eq.nombre}</td>
-          <td style="padding:7px 12px;font-size:11px;color:var(--muted)">${p.emoji} ${p.nombre}</td>
+          <td style="padding:7px 12px;font-weight:600;white-space:nowrap">${nombre}</td>
+          <td style="padding:7px 12px;font-size:11px;color:var(--muted)">${predioTags}</td>
           <td style="padding:4px 8px;text-align:right"><input type="number" min="0" step="0.1" placeholder="—" value="${dDiesel}"
             style="width:130px;padding:4px 7px;text-align:right;border:1px solid #d4c0a0;font-size:13px"
-            onchange="gastosGridDraft['d_${pi}_${eq.id}']=this.value"/></td>
+            onchange="gastosGridDraft['d_${nombre}']=this.value"/></td>
           <td style="padding:7px 12px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${totLitros?fmtN(totLitros,0)+' L':'—'}</td>
           <td style="padding:7px 12px;text-align:right;font-family:'DM Mono',monospace;color:var(--amber);font-size:12px">${totDiesel?fmt(totDiesel):'—'}</td>
-          <td style="padding:4px">${isAdmin?`<button class="btn btn-d" style="font-size:10px;padding:2px 6px" onclick="delEquipoByNombre(${pi},'${eq.id}')">✕</button>`:''}</td>
+          <td style="padding:4px">${isAdmin?`<button class="btn btn-d" style="font-size:10px;padding:2px 6px" onclick="delEquipoTodos('${nombre}','${tipo}')">✕</button>`:''}</td>
         </tr>`;
       }).join('');
 
@@ -3109,6 +3125,14 @@ function addEquipoInline(tabla) {
   toast('✓ Equipo agregado');
 }
 
+function delEquipoTodos(nombre, tipo) {
+  if(!confirm(`¿Eliminar "${nombre}" de todos los predios? Los gastos registrados se conservan.`)) return;
+  S.predios.forEach((p,pi)=>{
+    if(S.equipos[pi]) S.equipos[pi] = S.equipos[pi].filter(e=>!(e.nombre===nombre&&e.tipo===tipo));
+  });
+  save(); renderGastos(); toast('✓ Eliminado de todos los predios');
+}
+
 function delEquipoByNombre(pi, eqId) {
   if(!confirm('¿Eliminar este equipo? Los gastos registrados se conservan.')) return;
   S.equipos[pi] = (S.equipos[pi]||[]).filter(e=>e.id!==eqId);
@@ -3260,20 +3284,32 @@ function capturarGastos() {
 
   if(gastosTab === 'tractores') {
     const precioDieselCn = (S.precioDiesel && S.precioDiesel[cn]) || 0;
+    // Collect unique equipo names and their predios
+    const equipoNombresCapt = [];
     S.predios.forEach((p,pi)=>{
-      if(!prediosIdx.includes(pi)) return;
-      (S.equipos[pi]||[]).filter(e=>e.tipo==='tractor'||e.tipo==='implemento'||e.tipo==='noria').forEach(eq=>{
-        const litros = parseFloat(gastosGridDraft[`d_${pi}_${eq.id}`]);
-        const serv   = parseFloat(gastosGridDraft[`s_${pi}_${eq.id}`]);
-        const rep    = parseFloat(gastosGridDraft[`r_${pi}_${eq.id}`]);
-        if(litros>0) {
-          const montoDiesel = precioDieselCn ? litros * precioDieselCn : litros;
-          S.gastosGenerales.push({id:uid(),cosecha:cn,anio,categoria:'Diesel',equipo:eq.nombre,litros,precioPorLitro:precioDieselCn,monto:montoDiesel,prediosIdx:[pi],fecha:today()});
-          total++;
-        }
-        if(serv>0) { S.gastosGenerales.push({id:uid(),cosecha:cn,anio,categoria:'Maquinaria',equipo:eq.nombre,actividad:'Servicio',monto:serv,prediosIdx:[pi],fecha:today()}); total++; }
-        if(rep>0)  { S.gastosGenerales.push({id:uid(),cosecha:cn,anio,categoria:'Maquinaria',equipo:eq.nombre,actividad:'Reparación',monto:rep,prediosIdx:[pi],fecha:today()}); total++; }
+      (S.equipos[pi]||[]).filter(e=>e.tipo==='tractor'||e.tipo==='noria'||e.tipo==='implemento').forEach(eq=>{
+        if(!equipoNombresCapt.find(x=>x.nombre===eq.nombre&&x.tipo===eq.tipo))
+          equipoNombresCapt.push({nombre:eq.nombre, tipo:eq.tipo});
       });
+    });
+    equipoNombresCapt.forEach(({nombre,tipo})=>{
+      // Get all predios that have this equipo
+      const prediosEq = [];
+      S.predios.forEach((p,pi)=>{
+        if((S.equipos[pi]||[]).find(e=>e.nombre===nombre&&e.tipo===tipo))
+          prediosEq.push(pi);
+      });
+      if(!prediosEq.length) return;
+      const litros = parseFloat(gastosGridDraft[`d_${nombre}`]);
+      const serv   = parseFloat(gastosGridDraft[`s_${nombre}`]);
+      const rep    = parseFloat(gastosGridDraft[`r_${nombre}`]);
+      if(litros>0 && tipo!=='implemento') {
+        const montoDiesel = precioDieselCn ? litros * precioDieselCn : litros;
+        S.gastosGenerales.push({id:uid(),cosecha:cn,anio,categoria:'Diesel',equipo:nombre,litros,precioPorLitro:precioDieselCn,monto:montoDiesel,prediosIdx:prediosEq,fecha:today()});
+        total++;
+      }
+      if(serv>0) { S.gastosGenerales.push({id:uid(),cosecha:cn,anio,categoria:'Maquinaria',equipo:nombre,actividad:'Servicio',monto:serv,prediosIdx:prediosEq,fecha:today()}); total++; }
+      if(rep>0)  { S.gastosGenerales.push({id:uid(),cosecha:cn,anio,categoria:'Maquinaria',equipo:nombre,actividad:'Reparación',monto:rep,prediosIdx:prediosEq,fecha:today()}); total++; }
     });
 
   } else if(gastosTab === 'luz') {
